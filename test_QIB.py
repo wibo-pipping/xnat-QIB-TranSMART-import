@@ -23,6 +23,7 @@ Functions that needs to be tested:
         - New subject
         - New information
         - Nothing new
+    - encoding of files
 """
 
 
@@ -38,7 +39,7 @@ class TestQIBDatatypeRetrieval(unittest.TestCase):
         return project
 
     def test_main_connection(self):
-        project = self.setup(conf_file)
+        project = self.setup(self.conf_file)
         assert_not_equal(project, None)
 
     def test_wrong_connection(self):
@@ -79,7 +80,7 @@ class TestQIBDatatypeRetrieval(unittest.TestCase):
                 assert studyParamFile.read() == testStudyParamFile.read()
 
     def test_write_headers(self):
-        args = self.set_args({"params":  conf_file})
+        args = self.set_args({"params":  self.conf_file})
         config = ConfigParser.ConfigParser()
         config.read(args.params)
         path = config.get('Study', 'STUDY_ID')
@@ -100,8 +101,8 @@ class TestQIBDatatypeRetrieval(unittest.TestCase):
         data_structure = [{'FreeSurfer1.0\\Gray matter\\Total gray matter volume': '156649.34', 'FreeSurfer1.0\\Gray matter\\Total cortical gray matter volume': '22164094.21', 'FreeSurfer1.0\\Gray matter\\Left hemisphere cortical gray matter volume': '1461661.59', 'FreeSurfer1.0\\Gray matter\\Subcortical gray matter volume': '1216493.64', 'FreeSurfer1.0\\White matter\\Right hemisphere cortical white matter volume': '16461.16', 'FreeSurfer1.0\\White matter\\Left hemisphere cortical white matter volume': '1164616.46', 'FreeSurfer1.0\\White matter\\Total cortical white matter volume': '1131646.19', 'FreeSurfer1.0\\Gray matter\\Right hemisphere cortical gray matter volume': '246161.16', 'subject': 'prj001_001', 'FreeSurfer1.0\\General results\\Brain Segmentation Volume Without Ventricles': '264616.46', 'FreeSurfer1.0\\General results\\Brain Segmentation Volume': '1131619.00'}]
         header_testList = ['subject', 'FreeSurfer1.0\\General results\\Brain Segmentation Volume', 'FreeSurfer1.0\\General results\\Brain Segmentation Volume Without Ventricles', 'FreeSurfer1.0\\Gray matter\\Left hemisphere cortical gray matter volume', 'FreeSurfer1.0\\Gray matter\\Right hemisphere cortical gray matter volume', 'FreeSurfer1.0\\Gray matter\\Total cortical gray matter volume', 'FreeSurfer1.0\\Gray matter\\Subcortical gray matter volume', 'FreeSurfer1.0\\Gray matter\\Total gray matter volume', 'FreeSurfer1.0\\White matter\\Left hemisphere cortical white matter volume', 'FreeSurfer1.0\\White matter\\Right hemisphere cortical white matter volume', 'FreeSurfer1.0\\White matter\\Total cortical white matter volume']
         tagFile = open("test.txt", "w")
-        project = self.setup(conf_file)
-        args = self.set_args({"params": conf_file})
+        project = self.setup(self.conf_file)
+        args = self.set_args({"params": self.conf_file})
         dataList, dataHeaderList = QIBPrototype.obtain_data(project, tagFile, args)
         tagFile.close()
         os.remove(tagFile.name)
@@ -111,11 +112,12 @@ class TestQIBDatatypeRetrieval(unittest.TestCase):
 
     def test_no_QIB(self):
         config = ConfigParser.ConfigParser()
-        config.read(conf_file)
+        config.read(self.self.conf_file)
         study_id = config.get('Study', 'STUDY_ID')
         tagFile = open(study_id+"/tags/tags.txt", "w")
         conf_no_QIB_file = "test_files/test_confs/no_QIB.conf"
         args = self.set_args({"params": conf_no_QIB_file})
+        project = self.setup(conf_no_QIB_file)
         dataList = QIBPrototype.obtain_data(project, tagFile, args)
         self.assertEqual(dataList, [])
 

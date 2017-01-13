@@ -39,12 +39,12 @@ Taglist =
 
 """
 
-import xnat
 import ConfigParser
 import argparse
 import os
 import sys
 import logging
+import xnat
 
 
 def main(args):
@@ -61,12 +61,12 @@ def main(args):
     print('Write .params files\n')
     write_params(path, args)
     print('Write headers\n')
-    tagfile, dataFile, conceptFile = write_headers(path, args)
+    tag_file, data_file, concept_file = write_headers(path, args)
     print('Obtaining data from XNAT\n')
-    dataList, dataHeaderList = obtain_data(project, tagfile, args)
+    data_list, data_header_list = obtain_data(project, tag_file, args)
     logging.info("Data obtained from XNAT.")
     print('Write data to files\n')
-    write_data(dataFile, conceptFile, dataList, dataHeaderList)
+    write_data(data_file, concept_file, data_list, data_header_list)
     logging.info("Data written to files.")
     logging.info("Exit.")
 
@@ -80,28 +80,28 @@ def make_connection(args):
     config = ConfigParser.SafeConfigParser()
     config.read(args.connection)
     try:
-        connectionName = config.get('Connection', 'url')
+        connection_name = config.get('Connection', 'url')
         user = config.get('Connection', 'user')
         pssw = config.get('Connection', 'password')
-        projectName = config.get('Connection', 'project')
-        connection = xnat.connect(connectionName,user=user,password=pssw)
-        project = connection.projects[projectName]
+        project_name = config.get('Connection', 'project')
+        connection = xnat.connect(connection_name, user=user, password=pssw)
+        project = connection.projects[project_name]
         logging.info("Connection established.")
         return project
-    
+
     except ConfigParser.NoSectionError as e:
         configError(e)
-        
+
     except KeyError:
-        print(("Project not found in XNAT.\nExit"))
+        print("Project not found in XNAT.\nExit")
         logging.critical("Project not found in XNAT.")
         if __name__ == "__main__":
             sys.exit()
         else:
             return None
-        
+
     except Exception as e:
-        print(str(e)+"\nExit")
+        print(str(e) + "\nExit")
         logging.critical(e.message)
         if __name__ == "__main__":
             sys.exit()
@@ -124,7 +124,7 @@ def create_dir(args):
             os.makedirs(newpath + "/tags/")
             os.makedirs(newpath + "/clinical/")
         return newpath
-    
+
     except ConfigParser.NoSectionError as e:
         configError(e)
 
@@ -142,19 +142,19 @@ def write_params(path, args):
         security_req = config.get('Study', 'SECURITY_REQUIRED')
         top_node = config.get('Study', 'TOP_NODE')
         tag_file = config.get('Tags', 'TAGS_FILE')
+        tag_param_file = open(path + '/tags/tags.params', 'w')
+        tag_param_file.write("TAGS_FILE=" + tag_file)
+        study_param_file = open(path + '/study.params', 'w')
+        study_param_file.write("STUDY_ID=" + study_id +
+                         "\nSECURITY_REQUIRED=" + security_req +
+                         "\nTOP_NODE=" + top_node)
+        clinical_param_file = open(path + '/clinical/clinical.params', 'w')
+        clinical_param_file.write("COLUMN_MAP_FILE=" + str(study_id) + "_clinical.txt")
+        tag_param_file.close()
+        study_param_file.close()
+        clinical_param_file.close()
     except ConfigParser.NoSectionError as e:
         configError(e)
-    tagParamFile = open(path+'/tags/tags.params','w')
-    tagParamFile.write("TAGS_FILE="+tag_file)
-    studyParamFile = open(path+'/study.params', 'w')
-    studyParamFile.write("STUDY_ID="+study_id+
-                         "\nSECURITY_REQUIRED="+security_req+
-                         "\nTOP_NODE="+top_node)   
-    clinicalParamFile = open(path+'/clinical/clinical.params', 'w')
-    clinicalParamFile.write("COLUMN_MAP_FILE="+str(study_id)+"_clinical.txt")
-    tagParamFile.close()
-    studyParamFile.close()
-    clinicalParamFile.close()
 
 
 def write_headers(path, args):
@@ -169,21 +169,23 @@ def write_headers(path, args):
     """
     config = ConfigParser.ConfigParser()
     config.read(args.params)
+
     try:
         study_id = config.get('Study', "STUDY_ID")
+        dataFile = open(path + '/clinical/' + study_id + '_clinical.txt', 'w')
+        conceptFile = open(path + '/clinical/' + study_id + '_columns.txt', 'w')
+        tagFile = open(path + '/tags/tags.txt', 'w')
+        conceptHeaders = ['Filename', 'Category Code', 'Column Number', 'Data Label']
+        tagHeaders = ['Concept Path', 'Title', 'Description', 'Weight']
+        conceptFile.write("\t".join(conceptHeaders) + '\n')
+        tagFile.write("\t".join(tagHeaders) + "\n")
+        tagFile.flush()
+        dataFile.flush()
+        conceptFile.flush()
+        return tagFile, dataFile, conceptFile
+
     except ConfigParser.NoSectionError as e:
         configError(e)
-    dataFile = open(path+'/clinical/'+study_id+'_clinical.txt', 'w')
-    conceptFile = open(path+'/clinical/'+study_id+'_columns.txt', 'w')
-    tagFile = open(path+'/tags/tags.txt', 'w')
-    conceptHeaders = ['Filename', 'Category Code', 'Column Number', 'Data Label']
-    tagHeaders = ['Concept Path', 'Title', 'Description', 'Weight'] 
-    conceptFile.write("\t".join(conceptHeaders)+'\n')
-    tagFile.write("\t".join(tagHeaders)+"\n")
-    tagFile.flush()
-    dataFile.flush()
-    conceptFile.flush()
-    return tagFile, dataFile, conceptFile
 
 
 def obtain_data(project, tagFile, args):
@@ -204,8 +206,8 @@ def obtain_data(project, tagFile, args):
         subjectObj = project.subjects[subject.label]
         for experiment in subjectObj.experiments.values():
             if "qib" in experiment.label.lower():
-                dataHeaderList, dataRowDict, conceptKeyList = retrieveQIB(subjectObj, experiment, tagFile, dataRowDict, 
-                        subject, dataHeaderList, conceptKeyList, args)
+                dataHeaderList, dataRowDict, conceptKeyList = retrieveQIB(subjectObj, experiment, tagFile, dataRowDict,
+                                                                          subject, dataHeaderList, conceptKeyList, args)
         dataList.append(dataRowDict)
     print(dataList)
     if dataList == [{}] or dataList == []:
@@ -297,22 +299,23 @@ def writeMetaData(session, tagFile, args):
     config.read(args.tags)
     try:
         tagList = config.get("Tags", "Taglist").split(', ')
+        if session.analysis_tool and session.analysis_tool_version:
+            conceptKey = str(session.analysis_tool + session.analysis_tool_version)
+        elif session.analysis_tool:
+            conceptKey = (session.analysis_tool)
+        else:
+            conceptKey = "Generic Tool"
+        for tag in tagList:
+            info_tag = getattr(session, tag)
+            if info_tag:
+                tagFile.write(conceptKey + "\t" + str(info_tag) + "\t" + tag.replace('_', ' ') + "\n")
+        basesessions = session.base_sessions
+        for basesession in basesessions.values():
+            tagFile.write(conceptKey + "\t" + str(basesession.accession_identifier) + "\taccession identifier\n")
+        return conceptKey
+
     except ConfigParser.NoSectionError as e:
         configError(e)
-    if session.analysis_tool and session.analysis_tool_version:
-        conceptKey = str(session.analysis_tool+session.analysis_tool_version)
-    elif session.analysis_tool:
-        conceptKey = (session.analysis_tool)
-    else:
-        conceptKey = "Generic Tool"
-    for tag in tagList:
-         info_tag = getattr(session, tag)
-         if info_tag:
-             tagFile.write(conceptKey+"\t"+str(info_tag)+"\t"+tag.replace('_',' ')+"\n")
-    basesessions = session.base_sessions
-    for basesession in basesessions.values():
-        tagFile.write(conceptKey+"\t"+str(basesession.accession_identifier)+"\taccession identifier\n")
-    return conceptKey
 
 
 def write_data(dataFile, conceptFile, dataList, dataHeaderList):
@@ -324,7 +327,7 @@ def write_data(dataFile, conceptFile, dataList, dataHeaderList):
         -dataList           List    List containing a directory per subject, key = header, value = value.
         -dataHeaderList     List    List containing all the headers.   
     """
-    dataFile.write("\t".join(dataHeaderList)+'\n')
+    dataFile.write("\t".join(dataHeaderList) + '\n')
     columnList = []
     for line in dataList:
         row = []
@@ -334,15 +337,17 @@ def write_data(dataFile, conceptFile, dataList, dataHeaderList):
             i += 1
         for header in dataHeaderList:
             if header in line.keys():
-               infoPiece = line[header]
-               index = dataHeaderList.index(header)
-               row[index] = infoPiece+'\t'
-               if header == "subject":
-                    conceptFile.write(str(os.path.basename(dataFile.name))+'\t'+str(header)+'\t'+str(index+1)+'\tSUBJ_ID\n')
-               elif header not in columnList:
-                   dataLabel = header.split("\\")[-1]
-                   conceptFile.write(str(os.path.basename(dataFile.name))+'\t'+str("\\".join(header.split("\\")[:-1]))+'\t'+str(index+1)+'\t'+str(dataLabel)+'\n')
-                   columnList.append(header)
+                infoPiece = line[header]
+                index = dataHeaderList.index(header)
+                row[index] = infoPiece + '\t'
+                if header == "subject":
+                    conceptFile.write(str(os.path.basename(dataFile.name)) + '\t' + str(header) + '\t' + str(
+                        index + 1) + '\tSUBJ_ID\n')
+                elif header not in columnList:
+                    dataLabel = header.split("\\")[-1]
+                    conceptFile.write(str(os.path.basename(dataFile.name)) + '\t' + str(
+                        "\\".join(header.split("\\")[:-1])) + '\t' + str(index + 1) + '\t' + str(dataLabel) + '\n')
+                    columnList.append(header)
         row[-1] = row[-1].replace('\t', '\n')
         dataFile.write(''.join(row))
         check_subject(row)
@@ -391,11 +396,11 @@ def configError(e):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--connection", help="Location of the configuration file for establishing XNAT connection.") 
+    parser.add_argument("--connection", help="Location of the configuration file for establishing XNAT connection.")
     parser.add_argument("--params", help="Location of the configuration file for the variables in the .params files.")
     parser.add_argument("--tags", help="Location of the configuration file for the tags.")
     args = parser.parse_args()
-    logging.basicConfig(filename="QIBlog.log" ,format='%(asctime)s:%(levelname)s:%(message)s', level=logging.INFO)
+    logging.basicConfig(filename="QIBlog.log", format='%(asctime)s:%(levelname)s:%(message)s', level=logging.INFO)
     subjectlogger = logging.getLogger("QIBSubjects")
     subjectlogger.setLevel(logging.INFO)
     ch = logging.FileHandler("QIBSubjects.log")
@@ -404,4 +409,3 @@ if __name__ == "__main__":
     ch.setFormatter(subform)
     subjectlogger.addHandler(ch)
     main(args)
-
