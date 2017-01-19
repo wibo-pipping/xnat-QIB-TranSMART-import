@@ -1,4 +1,0 @@
-hoi	foo
-hoi	bar
-	bar
-hoi	
