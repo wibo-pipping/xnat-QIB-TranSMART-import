@@ -126,7 +126,7 @@ def create_dir(args):
     """
     Function: Create the directory structure.
     Returns: 
-        -newpath    String   Path to the directory where all the files will be saved.
+        -new_path    String   Path to the directory where all the files will be saved.
     """
     try:
         file_test = open(args.params, 'r')
@@ -139,8 +139,8 @@ def create_dir(args):
 
     try:
         base_path = config.get('Directory', 'path')
-        newpath = config.get('Study', 'STUDY_ID')
-        path = base_path+newpath
+        new_path = config.get('Study', 'STUDY_ID')
+        path = base_path+new_path
         if not os.path.exists(path):
             os.makedirs(path)
             os.makedirs(path + "/tags/")
@@ -193,9 +193,9 @@ def write_headers(path, args):
     Parameters:
         -path   String  Path to the directory where all the files will be saved.
     Returns:
-        -tagFile        File    tags.txt, used to upload the metadata into TranSMART.
-        -dataFile       File    (STUDY_ID)_clinical.txt, used to upload the clinical data into TranSMART.
-        -conceptFile    File    (STUDY_ID)_columns.txt, used to determine which values are in which columns for uploading to TranSMART.
+        -tag_file        File    tags.txt, used to upload the metadata into TranSMART.
+        -data_file       File    (STUDY_ID)_clinical.txt, used to upload the clinical data into TranSMART.
+        -concept_file    File    (STUDY_ID)_columns.txt, used to determine which values are in which columns for uploading to TranSMART.
     """
     try:
         file_test = open(args.params, 'r')
@@ -209,133 +209,133 @@ def write_headers(path, args):
 
     try:
         study_id = config.get('Study', "STUDY_ID")
-        dataFile = open(path + '/clinical/' + study_id + '_clinical.txt', 'w')
-        conceptFile = open(path + '/clinical/' + study_id + '_columns.txt', 'w')
-        tagFile = open(path + '/tags/tags.txt', 'w')
-        conceptHeaders = ['Filename', 'Category Code', 'Column Number', 'Data Label']
-        tagHeaders = ['Concept Path', 'Title', 'Description', 'Weight']
-        conceptFile.write("\t".join(conceptHeaders) + '\n')
-        tagFile.write("\t".join(tagHeaders) + "\n")
-        tagFile.flush()
-        dataFile.flush()
-        conceptFile.flush()
-        return tagFile, dataFile, conceptFile
+        data_file = open(path + '/clinical/' + study_id + '_clinical.txt', 'w')
+        concept_file = open(path + '/clinical/' + study_id + '_columns.txt', 'w')
+        tag_file = open(path + '/tags/tags.txt', 'w')
+        concept_headers = ['Filename', 'Category Code', 'Column Number', 'Data Label']
+        tag_headers = ['Concept Path', 'Title', 'Description', 'Weight']
+        concept_file.write("\t".join(concept_headers) + '\n')
+        tag_file.write("\t".join(tag_headers) + "\n")
+        tag_file.flush()
+        data_file.flush()
+        concept_file.flush()
+        return tag_file, data_file, concept_file
 
     except ConfigParser.NoSectionError as e:
         configError(e)
 
 
-def obtain_data(project, tagFile, args):
+def obtain_data(project, tag_file, args):
     """
     Function: Obtains all the QIB data from the XNAT project.
     Parameters: 
         -project        xnatpy object   Xnat connection to a specific project.
-        -tagFile        File            tags.txt, used to upload the metadata into TranSMART.
+        -tag_file        File            tags.txt, used to upload the metadata into TranSMART.
     Returns:
-        -dataList           List    List containing directories per subject, key = header, value = value.
-        -dataHeaderList     List    List containing all the headers. 
+        -data_list           List    List containing directories per subject, key = header, value = value.
+        -data_header_list     List    List containing all the headers.
     """
-    conceptKeyList = []
-    dataHeaderList = []
-    dataList = []
+    concept_key_list = []
+    data_header_list = []
+    data_list = []
     tag_dict = {}
     for subject in project.subjects.values():
-        dataRowDict = {}
+        data_row_dict = {}
         print subject.label
-        subjectObj = project.subjects[subject.label]
-        for experiment in subjectObj.experiments.values():
+        subject_obj = project.subjects[subject.label]
+        for experiment in subject_obj.experiments.values():
             if "qib" in experiment.label.lower():
-                dataHeaderList, dataRowDict, conceptKeyList, tag_dict = retrieveQIB(subjectObj, experiment, tagFile, dataRowDict,
-                                                                          subject, dataHeaderList, conceptKeyList, tag_dict, args)
-        dataList.append(dataRowDict)
-    print(dataList)
-    if dataList == [{}] or dataList == []:
+                data_header_list, data_row_dict, concept_key_list, tag_dict = retrieveQIB(subject_obj, experiment, tag_file, data_row_dict,
+                                                                                          subject, data_header_list, concept_key_list, tag_dict, args)
+        data_list.append(data_row_dict)
+    print(data_list)
+    if data_list == [{}] or data_list == []:
         logging.warning("No QIB datatypes found.")
         print("No QIB datatypes found.\nExit")
         if __name__ == "__main__":
             sys.exit()
         else:
-            return dataList
-    print(dataList)
-    print(dataHeaderList)
-    return dataList, dataHeaderList
+            return data_list
+    print(data_list)
+    print(data_header_list)
+    return data_list, data_header_list
 
 
-def retrieveQIB(subjectObj, experiment, tagFile, dataRowDict, subject, dataHeaderList, conceptKeyList, tag_dict, args):
+def retrieveQIB(subject_obj, experiment, tag_file, data_row_dict, subject, data_header_list, concept_key_list, tag_dict, args):
     """
     Function: Retrieve the biomarker information from the QIB datatype.
     
     Parameters:
-        - subjectObj        XNAT.subject    Subject object derived from XNATpy
+        - subject_obj        XNAT.subject    Subject object derived from XNATpy
         - experiment        XNAT.experiment Experiment object derived from XNATpy
-        - tagFile           File            File used to write the metadata tags to
-        - dataRowDict       Dict            Dictionary for storing the subject information, headers = key
+        - tag_file           File            File used to write the metadata tags to
+        - data_row_dict       Dict            Dictionary for storing the subject information, headers = key
         - subject           Subject         Subject derived from XNATpy
-        - dataHeaderList    List            List used for storing all the headers
-        - conceptKeyList    List            List used for storing the concept keys
+        - data_header_list    List            List used for storing all the headers
+        - concept_key_list    List            List used for storing the concept keys
     
     Returns:
-        - dataHeaderList    List            List with the headers stored
-        - dataRowDict       Dict            Dict containing all the QIB information of the subject
-        - conceptKeyList    List            List containing all the concept keys so far.
+        - data_header_list    List            List with the headers stored
+        - data_row_dict       Dict            Dict containing all the QIB information of the subject
+        - concept_key_list    List            List containing all the concept keys so far.
     """
-    session = subjectObj.experiments[experiment.label]
-    beginConceptKey, tag_dict = writeMetaData(session, tagFile, tag_dict, args)
-    dataRowDict['subject'] = subject.label
-    if 'subject' not in dataHeaderList:
-        dataHeaderList.append('subject')
-    for biomarker_categorie in session.biomarker_categories:
-        results = session.biomarker_categories[biomarker_categorie]
+    session = subject_obj.experiments[experiment.label]
+    begin_concept_key, tag_dict = writeMetaData(session, tag_file, tag_dict, args)
+    data_row_dict['subject'] = subject.label
+    if 'subject' not in data_header_list:
+        data_header_list.append('subject')
+    for biomarker_category in session.biomarker_categories:
+        results = session.biomarker_categories[biomarker_category]
         for biomarker in results.biomarkers:
-            print biomarker_categorie
+            print biomarker_category
             print biomarker
-            conceptValue = results.biomarkers[biomarker].value
-            conceptKey = str(beginConceptKey) + '\\' + str(biomarker_categorie) + "\\" + str(biomarker)
-            dataRowDict[conceptKey] = conceptValue
-            if conceptKey not in dataHeaderList:
-                dataHeaderList.append(conceptKey)
+            concept_value = results.biomarkers[biomarker].value
+            concept_key = str(begin_concept_key) + '\\' + str(biomarker_category) + "\\" + str(biomarker)
+            data_row_dict[concept_key] = concept_value
+            if concept_key not in data_header_list:
+                data_header_list.append(concept_key)
                 if __name__ == "__main__":
-                    conceptKeyList, tag_dict = writeOntologyTag(results, biomarker, conceptKey, conceptKeyList, tagFile, tag_dict)
+                    concept_key_list, tag_dict = writeOntologyTag(results, biomarker, concept_key, concept_key_list, tag_file, tag_dict)
 
-    return dataHeaderList, dataRowDict, conceptKeyList, tag_dict
+    return data_header_list, data_row_dict, concept_key_list, tag_dict
 
 
-def writeOntologyTag(results, biomarker, conceptKey, conceptKeyList, tagFile, tag_dict):
+def writeOntologyTag(results, biomarker, concept_key, concept_key_list, tag_file, tag_dict):
     """
 
     Parameters:
         - results           XNAT object     Parsed QIB XML object.
         - biomarker         XNAT object     biomarker from parsed XML.
-        - conceptKey        String          concept key for TranSMART
-        - conceptKeyList    List            List containing the already used concept keys.
-        - tagFile           File            File for the metadata tags.
+        - concept_key        String          concept key for TranSMART
+        - concept_key_list    List            List containing the already used concept keys.
+        - tag_file           File            File for the metadata tags.
 
     Returns:
-        -conceptKeyList     List    List containing the already used concept keys.
+        -concept_key_list     List    List containing the already used concept keys.
 
     """
-    ontologyName = results.biomarkers[biomarker].ontology_name
-    ontologyIRI = results.biomarkers[biomarker].ontology_iri
-    if conceptKey not in conceptKeyList:
-        ontology_name_row = [conceptKey, ontologyName, "Ontology name"]
-        ontology_iri_row = [conceptKey, ontologyIRI, "Ontology IRI"]
-        tagFile.write('\t'.join(ontology_name_row) + '\t5\n')
-        tagFile.write('\t'.join(ontology_iri_row) + '\t5\n')
-        conceptKeyList.append(conceptKey)
-    return conceptKeyList, tag_dict
+    ontology_name = results.biomarkers[biomarker].ontology_name
+    ontology_IRI = results.biomarkers[biomarker].ontology_iri
+    if concept_key not in concept_key_list:
+        ontology_name_row = [concept_key, ontology_name, "Ontology name"]
+        ontology_iri_row = [concept_key, ontology_IRI, "Ontology IRI"]
+        tag_file.write('\t'.join(ontology_name_row) + '\t5\n')
+        tag_file.write('\t'.join(ontology_iri_row) + '\t5\n')
+        concept_key_list.append(concept_key)
+    return concept_key_list, tag_dict
 
 
-def writeMetaData(session, tagFile, tag_dict, args):
+def writeMetaData(session, tag_file, tag_dict, args):
     """
     Function: Write the metadata tags to the tag file.
 
     Parameters:
         - session       XNAT object     QIB datatype object in XNATpy
-        - tagFile       File            File for the metadata tags.
+        - tag_file       File            File for the metadata tags.
         - args          ArgumentParser
 
     Returns:
-         - conceptKey   String          concept key for TranSMART
+         - concept_key   String          concept key for TranSMART
 
 
     fix: Check if line is already in file
@@ -351,76 +351,75 @@ def writeMetaData(session, tagFile, tag_dict, args):
         sys.exit()
 
     try:
-        tagList = config.get("Tags", "Taglist").split(', ')
+        tag_list = config.get("Tags", "Taglist").split(', ')
         print(session.__class__.__dict__)
-        #accession_identifier = session.basesessions
         analysis_tool = getattr(session, "analysis_tool")
         analysis_tool_version = getattr(session, "analysis_tool_version")
         if analysis_tool and analysis_tool_version:
-            conceptKey = str(analysis_tool + " " + analysis_tool_version)
+            concept_key = str(analysis_tool + " " + analysis_tool_version)
         elif analysis_tool:
-            conceptKey = (analysis_tool)
+            concept_key = (analysis_tool)
         else:
-            conceptKey =   "Generic Tool"
-        for tag in tagList:
+            concept_key =   "Generic Tool"
+        for tag in tag_list:
             info_tag = getattr(session, tag)
             if info_tag:
-                line = conceptKey + "\t" + str(info_tag) + "\t" + tag.replace('_', ' ') + "\t5\n"
+                line = concept_key + "\t" + str(info_tag) + "\t" + tag.replace('_', ' ') + "\t5\n"
                 try:
                     found = tag_dict[line]
                 except KeyError:
                     tag_dict[line] = True
-                    tagFile.write(line)
+                    tag_file.write(line)
         if len(session.base_sessions.values()) >= 1:
             accession_identifier = session.base_sessions.values()[0].accession_identifier
-            line = conceptKey + "\t" + str(accession_identifier) + "\taccession identifier\t5\n"
+            line = concept_key + "\t" + str(accession_identifier) + "\taccession identifier\t5\n"
             try:
                 found = tag_dict[line]
             except KeyError:
                 tag_dict[line] = True
-                tagFile.write(line)
-        return conceptKey, tag_dict
+                tag_file.write(line)
+        return concept_key, tag_dict
 
     except ConfigParser.NoSectionError as e:
         configError(e)
 
 
-def write_data(dataFile, conceptFile, dataList, dataHeaderList):
+def write_data(data_file, concept_file, data_list, data_header_list):
     """
-    Function: Writes the data from dataList to dataFile.
+    Function: Writes the data from data_list to data_file.
     Parameters: 
-        -dataFile           File    (STUDY_ID)_clinical.txt, used to upload the clinical data into TranSMART.
-        -conceptFile        File    (STUDY_ID)_columns.txt, used to determine which values are in which columns for uploading to TranSMART. 
-        -dataList           List    List containing a directory per subject, key = header, value = value.
-        -dataHeaderList     List    List containing all the headers.   
+        -data_file           File    (STUDY_ID)_clinical.txt, used to upload the clinical data into TranSMART.
+        -concept_file        File    (STUDY_ID)_columns.txt, used to determine which values are in which columns for uploading to TranSMART.
+        -data_list           List    List containing a directory per subject, key = header, value = value.
+        -data_header_list     List    List containing all the headers.
     """
-    dataFile.write("\t".join(dataHeaderList) + '\n')
-    columnList = []
+    data_file.write("\t".join(data_header_list) + '\n')
+    column_list = []
     rows = []
-    for line in dataList:
+    for line in data_list:
         row = []
         i = 0
-        while i < len(dataHeaderList):
+        while i < len(data_header_list):
             row.append('\t')
             i += 1
-        for header in dataHeaderList:
+        for header in data_header_list:
             if header in line.keys():
                 infoPiece = line[header]
-                index = dataHeaderList.index(header)
+                index = data_header_list.index(header)
                 row[index] = infoPiece + '\t'
                 if header == "subject":
-                    conceptFile.write(str(os.path.basename(dataFile.name)) + '\t' + str(header) + '\t' + str(
+                    concept_file.write(str(os.path.basename(data_file.name)) + '\t' + str(header) + '\t' + str(
                         index + 1) + '\tSUBJ_ID\n')
-                elif header not in columnList:
-                    dataLabel = header.split("\\")[-1]
-                    conceptFile.write(str(os.path.basename(dataFile.name)) + '\t' + str(
-                        "\\".join(header.split("\\")[:-1])) + '\t' + str(index + 1) + '\t' + str(dataLabel) + '\n')
-                    columnList.append(header)
+                elif header not in column_list:
+                    data_label = header.split("\\")[-1]
+                    concept_file.write(str(os.path.basename(data_file.name)) + '\t' + str(
+                        "\\".join(header.split("\\")[:-1])) + '\t' + str(index + 1) + '\t' + str(data_label) + '\n')
+                    column_list.append(header)
         row[-1] = row[-1].replace('\t', '\n')
-        dataFile.write(''.join(row))
+        data_file.write(''.join(row))
         rows.append(row)
     check_subject(rows)
-    dataFile.close()
+    data_file.close()
 
 
 def check_subject(rows):
@@ -432,27 +431,27 @@ def check_subject(rows):
     """
     if __name__ != "__main__":
         set_subject_logger(True)
-        subjectlogger = logging.getLogger("QIBSubjects")
+        subject_logger = logging.getLogger("QIBSubjects")
     else:
-        subjectlogger = logging.getLogger("QIBSubjects")
-    with open(subjectlogger.handlers[0].baseFilename, "r") as logFile:
-        logData = logFile.read()
+        subject_logger = logging.getLogger("QIBSubjects")
+    with open(subject_logger.handlers[0].baseFilename, "r") as log_file:
+        log_data = log_file.read()
     written_to_file = []
     for row in rows:
-        foundInfo = False
-        foundSubject = False
-        if row[0] in logData:
-            foundSubject = True
+        found_info = False
+        found_subject = False
+        if row[0] in log_data:
+            found_subject = True
             print("subject found")
-            if ''.join(row) in logData:
-                foundInfo = True
+            if ''.join(row) in log_data:
+                found_info = True
                 print("info found")
-        if not foundSubject and row not in written_to_file:
-            subjectlogger.info("New subject: " + ''.join(row))
+        if not found_subject and row not in written_to_file:
+            subject_logger.info("New subject: " + ''.join(row))
             written_to_file.append(row)
             print ("subject log written")
-        elif not foundInfo and row not in written_to_file: 
-            subjectlogger.info("New info for Subject: " + ''.join(row))
+        elif not found_info and row not in written_to_file:
+            subject_logger.info("New info for Subject: " + ''.join(row))
             written_to_file.append(row)
             print ("info log written")
 
@@ -471,8 +470,8 @@ def configError(e):
         sys.exit()
 
 def set_subject_logger(test_bool):
-    subjectlogger = logging.getLogger("QIBSubjects")
-    subjectlogger.setLevel(logging.INFO)
+    subject_logger = logging.getLogger("QIBSubjects")
+    subject_logger.setLevel(logging.INFO)
     if test_bool:
         ch = logging.FileHandler("test_files/QIBSubjects.log")
     else:
@@ -480,7 +479,7 @@ def set_subject_logger(test_bool):
     ch.setLevel(logging.INFO)
     subform = logging.Formatter('%(asctime)s:%(message)s')
     ch.setFormatter(subform)
-    subjectlogger.addHandler(ch)
+    subject_logger.addHandler(ch)
 
 
 if __name__ == "__main__":
