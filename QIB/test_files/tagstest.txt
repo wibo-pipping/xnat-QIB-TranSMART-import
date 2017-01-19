@@ -1,0 +1,15 @@
+QIB 001	QIB	analysis tool	5
+QIB 001	001	analysis tool version	5
+FreeSurfer 1.0	FreeSurfer	analysis tool	5
+FreeSurfer 1.0	1.0	analysis tool version	5
+FreeSurfer 1.0	ToolOntology	analysis tool ontology name	5
+FreeSurfer 1.0	ToolIRI	analysis tool ontology iri	5
+FreeSurfer 1.0	Freesurfer run using Configuration 3.2.	description	5
+FreeSurfer 1.0	Erwin Vast	processing user name	5
+FreeSurfer 1.0	Erasmus MC	processing site name	5
+FreeSurfer 1.0	Within-Subject Template Estimation for Unbiased Longitudinal Image Analysis.	paper title	5
+FreeSurfer 1.0	http://freesurfer.net/fswiki/FreeSurferMethodsCitation?action=AttachFile&do=view&target=freesurfer_methods.doc	paper url	5
+FreeSurfer 1.0	For pipeline configuration see Table 3 in Chapter 4.	paper notes	5
+FreeSurfer 1.0	Questionable	review status	5
+FreeSurfer 1.0	EV	reviewer	5
+FreeSurfer 1.0	prj001_001_MR2	accession identifier	5

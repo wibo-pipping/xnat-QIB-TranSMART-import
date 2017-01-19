@@ -1,0 +1,2 @@
+writedata.txt		1	hoi
+writedata.txt		2	foo

@@ -56,18 +56,24 @@ def main(args):
     logging.info("Start.")
     print('Establishing connection\n')
     project = make_connection(args)
+
     print('Creating directory structure\n')
     path = create_dir(args)
+
     print('Write .params files\n')
     write_params(path, args)
+
     print('Write headers\n')
     tag_file, data_file, concept_file = write_headers(path, args)
+
     print('Obtaining data from XNAT\n')
     data_list, data_header_list = obtain_data(project, tag_file, args)
     logging.info("Data obtained from XNAT.")
+
     print('Write data to files\n')
     write_data(data_file, concept_file, data_list, data_header_list)
     logging.info("Data written to files.")
+
     logging.info("Exit.")
 
 
@@ -77,8 +83,15 @@ def make_connection(args):
     Returns: 
         -project    xnatpy object   Xnat connection to a specific project.
     """
-    config = ConfigParser.SafeConfigParser()
-    config.read(args.connection)
+    try:
+        file_test = open(args.connection, 'r')
+        config = ConfigParser.SafeConfigParser()
+        config.read(args.connection)
+    except IOError:
+        print("Connection config file not found")
+        logging.critical("Connection config file not found")
+        sys.exit()
+
     try:
         connection_name = config.get('Connection', 'url')
         user = config.get('Connection', 'user')
@@ -115,15 +128,25 @@ def create_dir(args):
     Returns: 
         -newpath    String   Path to the directory where all the files will be saved.
     """
-    config = ConfigParser.ConfigParser()
-    config.read(args.params)
     try:
+        file_test = open(args.params, 'r')
+        config = ConfigParser.ConfigParser()
+        config.read(args.params)
+    except IOError:
+        print("Params config file not found")
+        logging.critical("Params config file not found")
+        sys.exit()
+
+    try:
+        base_path = config.get('Directory', 'path')
         newpath = config.get('Study', 'STUDY_ID')
-        if not os.path.exists(newpath):
-            os.makedirs(newpath)
-            os.makedirs(newpath + "/tags/")
-            os.makedirs(newpath + "/clinical/")
-        return newpath
+        path = base_path+newpath
+        if not os.path.exists(path):
+            os.makedirs(path)
+            os.makedirs(path + "/tags/")
+            os.makedirs(path + "/clinical/")
+        print(path)
+        return path
 
     except ConfigParser.NoSectionError as e:
         configError(e)
@@ -135,8 +158,15 @@ def write_params(path, args):
     Parameters:
         -path   String  Path to the directory where all the files will be saved.
     """
-    config = ConfigParser.ConfigParser()
-    config.read(args.params)
+    try:
+        file_test = open(args.params, 'r')
+        config = ConfigParser.ConfigParser()
+        config.read(args.params)
+    except IOError:
+        print("Params config file not found")
+        logging.critical("Params config file not found")
+        sys.exit()
+
     try:
         study_id = config.get('Study', "STUDY_ID")
         security_req = config.get('Study', 'SECURITY_REQUIRED')
@@ -149,7 +179,7 @@ def write_params(path, args):
                          "\nSECURITY_REQUIRED=" + security_req +
                          "\nTOP_NODE=" + top_node)
         clinical_param_file = open(path + '/clinical/clinical.params', 'w')
-        clinical_param_file.write("COLUMN_MAP_FILE=" + str(study_id) + "_clinical.txt")
+        clinical_param_file.write("COLUMN_MAP_FILE=" + str(study_id) + "_columns.txt")
         tag_param_file.close()
         study_param_file.close()
         clinical_param_file.close()
@@ -167,8 +197,15 @@ def write_headers(path, args):
         -dataFile       File    (STUDY_ID)_clinical.txt, used to upload the clinical data into TranSMART.
         -conceptFile    File    (STUDY_ID)_columns.txt, used to determine which values are in which columns for uploading to TranSMART.
     """
-    config = ConfigParser.ConfigParser()
-    config.read(args.params)
+    try:
+        file_test = open(args.params, 'r')
+        config = ConfigParser.ConfigParser()
+        config.read(args.params)
+
+    except IOError:
+        print("Params config file not found")
+        logging.critical("Params config file not found")
+        sys.exit()
 
     try:
         study_id = config.get('Study', "STUDY_ID")
@@ -201,13 +238,15 @@ def obtain_data(project, tagFile, args):
     conceptKeyList = []
     dataHeaderList = []
     dataList = []
+    tag_dict = {}
     for subject in project.subjects.values():
         dataRowDict = {}
+        print subject.label
         subjectObj = project.subjects[subject.label]
         for experiment in subjectObj.experiments.values():
             if "qib" in experiment.label.lower():
-                dataHeaderList, dataRowDict, conceptKeyList = retrieveQIB(subjectObj, experiment, tagFile, dataRowDict,
-                                                                          subject, dataHeaderList, conceptKeyList, args)
+                dataHeaderList, dataRowDict, conceptKeyList, tag_dict = retrieveQIB(subjectObj, experiment, tagFile, dataRowDict,
+                                                                          subject, dataHeaderList, conceptKeyList, tag_dict, args)
         dataList.append(dataRowDict)
     print(dataList)
     if dataList == [{}] or dataList == []:
@@ -222,7 +261,7 @@ def obtain_data(project, tagFile, args):
     return dataList, dataHeaderList
 
 
-def retrieveQIB(subjectObj, experiment, tagFile, dataRowDict, subject, dataHeaderList, conceptKeyList, args):
+def retrieveQIB(subjectObj, experiment, tagFile, dataRowDict, subject, dataHeaderList, conceptKeyList, tag_dict, args):
     """
     Function: Retrieve the biomarker information from the QIB datatype.
     
@@ -241,24 +280,27 @@ def retrieveQIB(subjectObj, experiment, tagFile, dataRowDict, subject, dataHeade
         - conceptKeyList    List            List containing all the concept keys so far.
     """
     session = subjectObj.experiments[experiment.label]
-    beginConceptKey = writeMetaData(session, tagFile, args)
+    beginConceptKey, tag_dict = writeMetaData(session, tagFile, tag_dict, args)
     dataRowDict['subject'] = subject.label
     if 'subject' not in dataHeaderList:
         dataHeaderList.append('subject')
     for biomarker_categorie in session.biomarker_categories:
         results = session.biomarker_categories[biomarker_categorie]
         for biomarker in results.biomarkers:
+            print biomarker_categorie
+            print biomarker
             conceptValue = results.biomarkers[biomarker].value
             conceptKey = str(beginConceptKey) + '\\' + str(biomarker_categorie) + "\\" + str(biomarker)
             dataRowDict[conceptKey] = conceptValue
             if conceptKey not in dataHeaderList:
                 dataHeaderList.append(conceptKey)
                 if __name__ == "__main__":
-                    conceptKeyList = writeOntologyTag(results, biomarker, conceptKey, conceptKeyList, tagFile)
-    return dataHeaderList, dataRowDict, conceptKeyList
+                    conceptKeyList, tag_dict = writeOntologyTag(results, biomarker, conceptKey, conceptKeyList, tagFile, tag_dict)
+
+    return dataHeaderList, dataRowDict, conceptKeyList, tag_dict
 
 
-def writeOntologyTag(results, biomarker, conceptKey, conceptKeyList, tagFile):
+def writeOntologyTag(results, biomarker, conceptKey, conceptKeyList, tagFile, tag_dict):
     """
 
     Parameters:
@@ -277,13 +319,13 @@ def writeOntologyTag(results, biomarker, conceptKey, conceptKeyList, tagFile):
     if conceptKey not in conceptKeyList:
         ontology_name_row = [conceptKey, ontologyName, "Ontology name"]
         ontology_iri_row = [conceptKey, ontologyIRI, "Ontology IRI"]
-        tagFile.write('\t'.join(ontology_name_row) + '\n')
-        tagFile.write('\t'.join(ontology_iri_row) + '\n')
+        tagFile.write('\t'.join(ontology_name_row) + '\t5\n')
+        tagFile.write('\t'.join(ontology_iri_row) + '\t5\n')
         conceptKeyList.append(conceptKey)
-    return conceptKeyList
+    return conceptKeyList, tag_dict
 
 
-def writeMetaData(session, tagFile, args):
+def writeMetaData(session, tagFile, tag_dict, args):
     """
     Function: Write the metadata tags to the tag file.
 
@@ -294,25 +336,50 @@ def writeMetaData(session, tagFile, args):
 
     Returns:
          - conceptKey   String          concept key for TranSMART
+
+
+    fix: Check if line is already in file
     """
-    config = ConfigParser.SafeConfigParser()
-    config.read(args.tags)
+    try:
+        file_test = open(args.tags, 'r')
+        config = ConfigParser.SafeConfigParser()
+        config.read(args.tags)
+
+    except IOError:
+        print("Tags config file not found")
+        logging.critical("Tags config file not found")
+        sys.exit()
+
     try:
         tagList = config.get("Tags", "Taglist").split(', ')
-        if session.analysis_tool and session.analysis_tool_version:
-            conceptKey = str(session.analysis_tool + session.analysis_tool_version)
-        elif session.analysis_tool:
-            conceptKey = (session.analysis_tool)
+        print(session.__class__.__dict__)
+        #accession_identifier = session.basesessions
+        analysis_tool = getattr(session, "analysis_tool")
+        analysis_tool_version = getattr(session, "analysis_tool_version")
+        if analysis_tool and analysis_tool_version:
+            conceptKey = str(analysis_tool + " " + analysis_tool_version)
+        elif analysis_tool:
+            conceptKey = (analysis_tool)
         else:
-            conceptKey = "Generic Tool"
+            conceptKey =   "Generic Tool"
         for tag in tagList:
             info_tag = getattr(session, tag)
             if info_tag:
-                tagFile.write(conceptKey + "\t" + str(info_tag) + "\t" + tag.replace('_', ' ') + "\n")
-        basesessions = session.base_sessions
-        for basesession in basesessions.values():
-            tagFile.write(conceptKey + "\t" + str(basesession.accession_identifier) + "\taccession identifier\n")
-        return conceptKey
+                line = conceptKey + "\t" + str(info_tag) + "\t" + tag.replace('_', ' ') + "\t5\n"
+                try:
+                    found = tag_dict[line]
+                except KeyError:
+                    tag_dict[line] = True
+                    tagFile.write(line)
+        if len(session.base_sessions.values()) >= 1:
+            accession_identifier = session.base_sessions.values()[0].accession_identifier
+            line = conceptKey + "\t" + str(accession_identifier) + "\taccession identifier\t5\n"
+            try:
+                found = tag_dict[line]
+            except KeyError:
+                tag_dict[line] = True
+                tagFile.write(line)
+        return conceptKey, tag_dict
 
     except ConfigParser.NoSectionError as e:
         configError(e)
@@ -329,6 +396,7 @@ def write_data(dataFile, conceptFile, dataList, dataHeaderList):
     """
     dataFile.write("\t".join(dataHeaderList) + '\n')
     columnList = []
+    rows = []
     for line in dataList:
         row = []
         i = 0
@@ -350,34 +418,43 @@ def write_data(dataFile, conceptFile, dataList, dataHeaderList):
                     columnList.append(header)
         row[-1] = row[-1].replace('\t', '\n')
         dataFile.write(''.join(row))
-        check_subject(row)
+        rows.append(row)
+    check_subject(rows)
     dataFile.close()
 
 
-def check_subject(row):
+def check_subject(rows):
     """
     Function: Checks in a log file if the subject is new or if there is information added or removed.
 
     Parameters:
-        - row   List    List containing the retrieved QIB information of a subject.
+        - rows   List    List containing lists with the retrieved QIB information of a subject.
     """
-    subjectlogger = logging.getLogger("QIBSubjects")
-    with open("QIBSubjects.log", "r") as logFile:
+    if __name__ != "__main__":
+        set_subject_logger(True)
+        subjectlogger = logging.getLogger("QIBSubjects")
+    else:
+        subjectlogger = logging.getLogger("QIBSubjects")
+    with open(subjectlogger.handlers[0].baseFilename, "r") as logFile:
         logData = logFile.read()
-    foundInfo = False
-    foundSubject = False
-    if row[0] in logData:
-        foundSubject = True
-        print("subject found")
-        if ''.join(row) in logData:
-            foundInfo = True
-            print("info found")
-    if not foundSubject:
-        subjectlogger.info("New subject: " + ''.join(row))
-        print ("subject log written")
-    elif not foundInfo:
-        subjectlogger.info("New info for Subject: " + ''.join(row))
-        print ("info log written")
+    written_to_file = []
+    for row in rows:
+        foundInfo = False
+        foundSubject = False
+        if row[0] in logData:
+            foundSubject = True
+            print("subject found")
+            if ''.join(row) in logData:
+                foundInfo = True
+                print("info found")
+        if not foundSubject and row not in written_to_file:
+            subjectlogger.info("New subject: " + ''.join(row))
+            written_to_file.append(row)
+            print ("subject log written")
+        elif not foundInfo and row not in written_to_file: 
+            subjectlogger.info("New info for Subject: " + ''.join(row))
+            written_to_file.append(row)
+            print ("info log written")
 
 
 def configError(e):
@@ -393,6 +470,18 @@ def configError(e):
         print(str(e) + "\nExit")
         sys.exit()
 
+def set_subject_logger(test_bool):
+    subjectlogger = logging.getLogger("QIBSubjects")
+    subjectlogger.setLevel(logging.INFO)
+    if test_bool:
+        ch = logging.FileHandler("test_files/QIBSubjects.log")
+    else:
+        ch = logging.FileHandler("QIBSubjects.log")
+    ch.setLevel(logging.INFO)
+    subform = logging.Formatter('%(asctime)s:%(message)s')
+    ch.setFormatter(subform)
+    subjectlogger.addHandler(ch)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -401,11 +490,5 @@ if __name__ == "__main__":
     parser.add_argument("--tags", help="Location of the configuration file for the tags.")
     args = parser.parse_args()
     logging.basicConfig(filename="QIBlog.log", format='%(asctime)s:%(levelname)s:%(message)s', level=logging.INFO)
-    subjectlogger = logging.getLogger("QIBSubjects")
-    subjectlogger.setLevel(logging.INFO)
-    ch = logging.FileHandler("QIBSubjects.log")
-    ch.setLevel(logging.INFO)
-    subform = logging.Formatter('%(asctime)s:%(message)s')
-    ch.setFormatter(subform)
-    subjectlogger.addHandler(ch)
+    set_subject_logger(False)
     main(args)
