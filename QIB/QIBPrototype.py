@@ -20,16 +20,17 @@ Formats:
 url = 
 user =
 password =
+project =
 
 --params configuration file:
 
 [Study]
-STUDY_ID = 
+STUDY_ID =
 SECURITY_REQUIRED =
-TOP_NODE = 
+TOP_NODE =
 
-[Tags]
-TAGS_FILE = 
+[Directory]
+path =
 
 --tags configuration file:
 
@@ -87,6 +88,7 @@ def make_connection(args):
         file_test = open(args.connection, 'r')
         config = ConfigParser.SafeConfigParser()
         config.read(args.connection)
+
     except IOError:
         print("Connection config file not found")
         logging.critical("Connection config file not found")
@@ -132,6 +134,7 @@ def create_dir(args):
         file_test = open(args.params, 'r')
         config = ConfigParser.ConfigParser()
         config.read(args.params)
+
     except IOError:
         print("Params config file not found")
         logging.critical("Params config file not found")
@@ -162,6 +165,7 @@ def write_params(path, args):
         file_test = open(args.params, 'r')
         config = ConfigParser.ConfigParser()
         config.read(args.params)
+
     except IOError:
         print("Params config file not found")
         logging.critical("Params config file not found")
@@ -171,9 +175,8 @@ def write_params(path, args):
         study_id = config.get('Study', "STUDY_ID")
         security_req = config.get('Study', 'SECURITY_REQUIRED')
         top_node = config.get('Study', 'TOP_NODE')
-        tag_file = config.get('Tags', 'TAGS_FILE')
         tag_param_file = open(path + '/tags/tags.params', 'w')
-        tag_param_file.write("TAGS_FILE=" + tag_file)
+        tag_param_file.write("TAGS_FILE=tags.txt")
         study_param_file = open(path + '/study.params', 'w')
         study_param_file.write("STUDY_ID=" + study_id +
                          "\nSECURITY_REQUIRED=" + security_req +
@@ -183,6 +186,7 @@ def write_params(path, args):
         tag_param_file.close()
         study_param_file.close()
         clinical_param_file.close()
+
     except ConfigParser.NoSectionError as e:
         configError(e)
 
@@ -248,7 +252,7 @@ def obtain_data(project, tag_file, args):
                 data_header_list, data_row_dict, concept_key_list, tag_dict = retrieveQIB(subject_obj, experiment, tag_file, data_row_dict,
                                                                                           subject, data_header_list, concept_key_list, tag_dict, args)
         data_list.append(data_row_dict)
-    print(data_list)
+
     if data_list == [{}] or data_list == []:
         logging.warning("No QIB datatypes found.")
         print("No QIB datatypes found.\nExit")
@@ -256,8 +260,7 @@ def obtain_data(project, tag_file, args):
             sys.exit()
         else:
             return data_list
-    print(data_list)
-    print(data_header_list)
+
     return data_list, data_header_list
 
 
@@ -284,6 +287,7 @@ def retrieveQIB(subject_obj, experiment, tag_file, data_row_dict, subject, data_
     data_row_dict['subject'] = subject.label
     if 'subject' not in data_header_list:
         data_header_list.append('subject')
+
     for biomarker_category in session.biomarker_categories:
         results = session.biomarker_categories[biomarker_category]
         for biomarker in results.biomarkers:
@@ -319,8 +323,9 @@ def writeOntologyTag(results, biomarker, concept_key, concept_key_list, tag_file
     if concept_key not in concept_key_list:
         ontology_name_row = [concept_key, ontology_name, "Ontology name"]
         ontology_iri_row = [concept_key, ontology_IRI, "Ontology IRI"]
-        tag_file.write('\t'.join(ontology_name_row) + '\t5\n')
-        tag_file.write('\t'.join(ontology_iri_row) + '\t5\n')
+        weight = "5"
+        tag_file.write('\t'.join(ontology_name_row) + '\t'+weight+'\n')
+        tag_file.write('\t'.join(ontology_iri_row) + '\t'+weight+'\n')
         concept_key_list.append(concept_key)
     return concept_key_list, tag_dict
 
@@ -402,11 +407,12 @@ def write_data(data_file, concept_file, data_list, data_header_list):
         while i < len(data_header_list):
             row.append('\t')
             i += 1
+
         for header in data_header_list:
             if header in line.keys():
-                infoPiece = line[header]
+                info_piece = line[header]
                 index = data_header_list.index(header)
-                row[index] = infoPiece + '\t'
+                row[index] = info_piece + '\t'
                 if header == "subject":
                     concept_file.write(str(os.path.basename(data_file.name)) + '\t' + str(header) + '\t' + str(
                         index + 1) + '\tSUBJ_ID\n')
@@ -434,9 +440,12 @@ def check_subject(rows):
         subject_logger = logging.getLogger("QIBSubjects")
     else:
         subject_logger = logging.getLogger("QIBSubjects")
+
     with open(subject_logger.handlers[0].baseFilename, "r") as log_file:
         log_data = log_file.read()
+
     written_to_file = []
+
     for row in rows:
         found_info = False
         found_subject = False
@@ -446,6 +455,7 @@ def check_subject(rows):
             if ''.join(row) in log_data:
                 found_info = True
                 print("info found")
+
         if not found_subject and row not in written_to_file:
             subject_logger.info("New subject: " + ''.join(row))
             written_to_file.append(row)
@@ -472,10 +482,12 @@ def configError(e):
 def set_subject_logger(test_bool):
     subject_logger = logging.getLogger("QIBSubjects")
     subject_logger.setLevel(logging.INFO)
+
     if test_bool:
         ch = logging.FileHandler("test_files/QIBSubjects.log")
     else:
         ch = logging.FileHandler("QIBSubjects.log")
+
     ch.setLevel(logging.INFO)
     subform = logging.Formatter('%(asctime)s:%(message)s')
     ch.setFormatter(subform)

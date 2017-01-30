@@ -53,7 +53,6 @@ class TestQIBDatatypeRetrieval(unittest.TestCase):
         with open(file_name, 'r') as file_:
             assert file_.read() == ""
 
-
     def test_main_connection(self):
         conf_file = 'test_files/test_confs/test.conf'
         project = self.setup(conf_file)
