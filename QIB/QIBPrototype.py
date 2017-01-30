@@ -40,13 +40,16 @@ Taglist =
 
 """
 
-import ConfigParser
+
 import argparse
 import os
 import sys
 import logging
+if sys.version_info.major == 3:
+    import configparser as ConfigParser
+elif sys.version_info.major == 2:
+    import ConfigParser
 import xnat
-
 
 def main(args):
     """
@@ -245,7 +248,6 @@ def obtain_data(project, tag_file, args):
     tag_dict = {}
     for subject in project.subjects.values():
         data_row_dict = {}
-        print subject.label
         subject_obj = project.subjects[subject.label]
         for experiment in subject_obj.experiments.values():
             if "qib" in experiment.label.lower():
@@ -291,8 +293,6 @@ def retrieveQIB(subject_obj, experiment, tag_file, data_row_dict, subject, data_
     for biomarker_category in session.biomarker_categories:
         results = session.biomarker_categories[biomarker_category]
         for biomarker in results.biomarkers:
-            print biomarker_category
-            print biomarker
             concept_value = results.biomarkers[biomarker].value
             concept_key = str(begin_concept_key) + '\\' + str(biomarker_category) + "\\" + str(biomarker)
             data_row_dict[concept_key] = concept_value
@@ -357,7 +357,6 @@ def writeMetaData(session, tag_file, tag_dict, args):
 
     try:
         tag_list = config.get("Tags", "Taglist").split(', ')
-        print(session.__class__.__dict__)
         analysis_tool = getattr(session, "analysis_tool")
         analysis_tool_version = getattr(session, "analysis_tool_version")
         if analysis_tool and analysis_tool_version:
@@ -474,7 +473,6 @@ def configError(e):
         - e     Exception
     """
     logging.critical(e)
-    print(__name__)
     if __name__ == "__main__":
         print(str(e) + "\nExit")
         sys.exit()
