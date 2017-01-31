@@ -1,17 +1,20 @@
 # QIB importer
 
-Function: Connect to an XNAT instance. There the script finds the QIB datatypes from XNAT.
+**Function:** Connect to an XNAT instance. There the script finds the QIB datatypes from XNAT.
 These datatypes are than transformed into a directory structure that can be uploaded to TranSMART.
 
+**Functional:** The script is tested with Python2.7. Testing with Python3 now fails, because of an XNATpy error.
 
-Requirements:
-xnatpy      Downloadable here: https://bitbucket.org/bigr_erasmusmc/xnatpy
 
-Parameters:
+**Requirements:**
+- *xnatpy*      Downloadable here: https://bitbucket.org/bigr_erasmusmc/xnatpy
+- *nose*        Can be installed by running pip install nose on the command line
 
-- connection    Location of the configuration file for establishing XNAT connection.
-- params        Location of the configuration file for the variables in the .param files.
-- tags          Location of the configuration file for the tags.
+**Parameters:**
+
+- *--connection*    Location of the configuration file for establishing XNAT connection.
+- *--params*        Location of the configuration file for the variables in the .param files.
+- *--tags*          Location of the configuration file for the tags.
 
 
 Configuration file format:
@@ -47,3 +50,32 @@ Taglist =
 
 TODO:
 Make the script functional with python3. Right now it returns an error from XNAT.
+
+
+## Testing
+
+Testing can be done by entering
+
+```
+nosestests
+```
+
+on the command line.
+
+Functions that are tested in test_QIB.py:
+
+   - Establishing connection
+        - Good (test_main_connection)
+        - Wrong (test_wrong_connection)
+        - Not finding project (test_unfound_project)
+   - Create dir structure (test_create_dir_structure)
+   - Write params (test_write_params)
+   - Write header (test_write_headers)
+   - Obtain data (test_obtain_data)
+   - If no QIB is present (test_no_QIB)
+   - Write meta_data (test_write_meta_data)
+   - Write data (test_write_data)
+   - Write logging of subjects
+        - New subject (test_write_logging_new_subject)
+        - New information (test_write_logging_new_information)
+        - Nothing new (test_write_logging_existing_information)

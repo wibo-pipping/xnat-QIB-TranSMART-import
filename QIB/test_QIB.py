@@ -1,6 +1,6 @@
 '''
 Name: test_QIB
-Function: Testing differen functional aspects of QIBPrototype
+Function: Testing different functional aspects of QIBPrototype
 Author: Jarno van Erp
 Company: The Hvye
 
