@@ -23,12 +23,15 @@ Functions that are tested:
 '''
 
 import unittest
-import nose
 import QIBPrototype
 from nose.tools import assert_not_equal
 import argparse
 import os
-import ConfigParser
+import sys
+if sys.version_info.major == 3:
+    import configparser as ConfigParser
+elif sys.version_info.major == 2:
+    import ConfigParser
 import re 
 import time
 
@@ -103,10 +106,14 @@ class TestQIBDatatypeRetrieval(unittest.TestCase):
 
         with open(path + '/clinical/clinical.params', 'r') as clinical_param_file:
             with open('test_files/clinical.params', 'r') as test_clinical_param_file:
+                print(clinical_param_file.read())
+                print(test_clinical_param_file.read())
                 assert clinical_param_file.read() == test_clinical_param_file.read()
 
         with open(path + '/study.params', 'r') as study_param_file:
             with open('test_files/study.params', 'r') as test_study_param_file:
+                print(study_param_file.read())
+                print(test_study_param_file.read())
                 assert study_param_file.read() == test_study_param_file.read()
 
     def test_write_headers(self):
@@ -131,8 +138,8 @@ class TestQIBDatatypeRetrieval(unittest.TestCase):
             self.assertEqual(first_line, "\t".join(['Filename', 'Category Code', 'Column Number', 'Data Label'])+"\n")
 
     def test_obtain_data(self):
-        data_structure = [{'FreeSurfer 1.0\\Gray matter\\Total gray matter volume': '156649.34', 'FreeSurfer 1.0\\Gray matter\\Total cortical gray matter volume': '22164094.21', 'FreeSurfer 1.0\\Gray matter\\Left hemisphere cortical gray matter volume': '1461661.59', 'FreeSurfer 1.0\\Gray matter\\Subcortical gray matter volume': '1216493.64', 'FreeSurfer 1.0\\White matter\\Right hemisphere cortical white matter volume': '16461.16', 'FreeSurfer 1.0\\White matter\\Left hemisphere cortical white matter volume': '1164616.46', 'FreeSurfer 1.0\\White matter\\Total cortical white matter volume': '1131646.19', 'FreeSurfer 1.0\\Gray matter\\Right hemisphere cortical gray matter volume': '246161.16', 'subject': 'prj001_001', 'FreeSurfer 1.0\\General results\\Brain Segmentation Volume Without Ventricles': '264616.46', 'FreeSurfer 1.0\\General results\\Brain Segmentation Volume': '1131619.00'}]
-        header_test_list = ['subject', 'FreeSurfer 1.0\\General results\\Brain Segmentation Volume', 'FreeSurfer 1.0\\General results\\Brain Segmentation Volume Without Ventricles', 'FreeSurfer 1.0\\Gray matter\\Left hemisphere cortical gray matter volume', 'FreeSurfer 1.0\\Gray matter\\Right hemisphere cortical gray matter volume', 'FreeSurfer 1.0\\Gray matter\\Total cortical gray matter volume', 'FreeSurfer 1.0\\Gray matter\\Subcortical gray matter volume', 'FreeSurfer 1.0\\Gray matter\\Total gray matter volume', 'FreeSurfer 1.0\\White matter\\Left hemisphere cortical white matter volume', 'FreeSurfer 1.0\\White matter\\Right hemisphere cortical white matter volume', 'FreeSurfer 1.0\\White matter\\Total cortical white matter volume']
+        data_structure = [{'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T0\\Left\\1 volume (mm^3)': u'6980.625', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T3\\Right\\entire (masked) image volume (mm^3)': u'2457600.0', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T7\\Right\\1 volume (mm^3)': u'6980.625', 'subject': u'PROOF001', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T0\\Left\\0 volume (mm^3)': u'2450619.375', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T7\\Left\\0 volume (mm^3)': u'2450619.375', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T1\\Right\\1 volume (mm^3)': u'6980.625', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T1\\Left\\1 volume (mm^3)': u'6980.625', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T7\\Left\\1 volume (mm^3)': u'6980.625', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T1\\Right\\entire (masked) image volume (mm^3)': u'2457600.0', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T3\\Left\\entire (masked) image volume (mm^3)': u'2457600.0', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T0\\Right\\entire (masked) image volume (mm^3)': u'2457600.0', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T7\\Left\\entire (masked) image volume (mm^3)': u'2457600.0', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T1\\Left\\0 volume (mm^3)': u'2450619.375', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T0\\Right\\1 volume (mm^3)': u'6980.625', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T3\\Left\\0 volume (mm^3)': u'2450619.375', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T1\\Left\\entire (masked) image volume (mm^3)': u'2457600.0', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T1\\Right\\0 volume (mm^3)': u'2450619.375', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T7\\Right\\0 volume (mm^3)': u'2450619.375', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T0\\Right\\0 volume (mm^3)': u'2450619.375', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T7\\Right\\entire (masked) image volume (mm^3)': u'2457600.0', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T3\\Left\\1 volume (mm^3)': u'6980.625', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T3\\Right\\1 volume (mm^3)': u'6980.625', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T3\\Right\\0 volume (mm^3)': u'2450619.375', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T0\\Left\\entire (masked) image volume (mm^3)': u'2457600.0'}]
+        header_test_list = ['subject', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T0\\Left\\1 volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T0\\Left\\0 volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T0\\Left\\entire (masked) image volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T1\\Left\\1 volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T1\\Left\\0 volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T1\\Left\\entire (masked) image volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T3\\Left\\1 volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T3\\Left\\0 volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T3\\Left\\entire (masked) image volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T7\\Left\\1 volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T7\\Left\\0 volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T7\\Left\\entire (masked) image volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T0\\Right\\1 volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T0\\Right\\0 volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T0\\Right\\entire (masked) image volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T1\\Right\\1 volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T1\\Right\\0 volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T1\\Right\\entire (masked) image volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T3\\Right\\1 volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T3\\Right\\0 volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T3\\Right\\entire (masked) image volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T7\\Right\\1 volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T7\\Right\\0 volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T7\\Right\\entire (masked) image volume (mm^3)']
         conf_file = 'test_files/test_confs/test.conf'
         tag_file = open("test.txt", "w")
         project = self.setup(conf_file)
@@ -173,6 +180,8 @@ class TestQIBDatatypeRetrieval(unittest.TestCase):
         tag_file.flush()
         with open("test.txt", "r") as tag_read_file:
             with open(self.file_path+ "tagstest.txt") as tag_test_file:
+                print(tag_read_file.read())
+                print(tag_test_file.read())
                 self.assertEqual(tag_read_file.read(), tag_test_file.read())
         os.remove(tag_file.name)
 
@@ -224,7 +233,6 @@ class TestQIBDatatypeRetrieval(unittest.TestCase):
         time_regex = ",[0-9]{3}:New info for Subject: "
         found = False
         with open(log_file, 'r') as open_log_file:
-                print current_date+time_regex+test_log
                 for line in open_log_file:
                     if re.match(current_date+time_regex+test_log, line):
                         found = True

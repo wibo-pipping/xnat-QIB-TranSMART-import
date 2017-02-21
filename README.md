@@ -7,7 +7,7 @@ These datatypes are than transformed into a directory structure that can be uplo
 
 
 **Requirements:**
-- *xnatpy*      Downloadable here: https://bitbucket.org/bigr_erasmusmc/xnatpy
+- *xnatpy*      Downloadable here: https://bitbucket.org/bigr_erasmusmc/xnatpy, for Python3 use the feature/xsdparse branch.
 - *nose*        Can be installed by running pip install nose on the command line
 
 **Parameters:**

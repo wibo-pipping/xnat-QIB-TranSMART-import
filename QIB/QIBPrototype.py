@@ -87,15 +87,7 @@ def make_connection(args):
     Returns: 
         -project    xnatpy object   Xnat connection to a specific project.
     """
-    try:
-        file_test = open(args.connection, 'r')
-        config = ConfigParser.SafeConfigParser()
-        config.read(args.connection)
-
-    except IOError:
-        print("Connection config file not found")
-        logging.critical("Connection config file not found")
-        sys.exit()
+    config = check_file_existence(args.connection, "connection")
 
     try:
         connection_name = config.get('Connection', 'url')
@@ -120,8 +112,8 @@ def make_connection(args):
 
     except Exception as e:
         print(str(e) + "\nExit")
-        logging.critical(e.message)
         if __name__ == "__main__":
+            logging.critical(e.message)
             sys.exit()
         else:
             return e
@@ -133,15 +125,7 @@ def create_dir(args):
     Returns: 
         -new_path    String   Path to the directory where all the files will be saved.
     """
-    try:
-        file_test = open(args.params, 'r')
-        config = ConfigParser.ConfigParser()
-        config.read(args.params)
-
-    except IOError:
-        print("Params config file not found")
-        logging.critical("Params config file not found")
-        sys.exit()
+    config = check_file_existence(args.params, "params")
 
     try:
         base_path = config.get('Directory', 'path')
@@ -151,7 +135,6 @@ def create_dir(args):
             os.makedirs(path)
             os.makedirs(path + "/tags/")
             os.makedirs(path + "/clinical/")
-        print(path)
         return path
 
     except ConfigParser.NoSectionError as e:
@@ -164,15 +147,7 @@ def write_params(path, args):
     Parameters:
         -path   String  Path to the directory where all the files will be saved.
     """
-    try:
-        file_test = open(args.params, 'r')
-        config = ConfigParser.ConfigParser()
-        config.read(args.params)
-
-    except IOError:
-        print("Params config file not found")
-        logging.critical("Params config file not found")
-        sys.exit()
+    config = check_file_existence(args.params, "Params")
 
     try:
         study_id = config.get('Study', "STUDY_ID")
@@ -204,15 +179,7 @@ def write_headers(path, args):
         -data_file       File    (STUDY_ID)_clinical.txt, used to upload the clinical data into TranSMART.
         -concept_file    File    (STUDY_ID)_columns.txt, used to determine which values are in which columns for uploading to TranSMART.
     """
-    try:
-        file_test = open(args.params, 'r')
-        config = ConfigParser.ConfigParser()
-        config.read(args.params)
-
-    except IOError:
-        print("Params config file not found")
-        logging.critical("Params config file not found")
-        sys.exit()
+    config = check_file_existence(args.params, "Params")
 
     try:
         study_id = config.get('Study', "STUDY_ID")
@@ -251,10 +218,11 @@ def obtain_data(project, tag_file, args):
         subject_obj = project.subjects[subject.label]
         for experiment in subject_obj.experiments.values():
             if "qib" in experiment.label.lower():
+                print(experiment.label.lower())
                 data_header_list, data_row_dict, concept_key_list, tag_dict = retrieveQIB(subject_obj, experiment, tag_file, data_row_dict,
                                                                                           subject, data_header_list, concept_key_list, tag_dict, args)
         data_list.append(data_row_dict)
-
+    print(data_header_list)
     if data_list == [{}] or data_list == []:
         logging.warning("No QIB datatypes found.")
         print("No QIB datatypes found.\nExit")
@@ -290,21 +258,26 @@ def retrieveQIB(subject_obj, experiment, tag_file, data_row_dict, subject, data_
     if 'subject' not in data_header_list:
         data_header_list.append('subject')
 
+    label_list = experiment.label.split('_')
     for biomarker_category in session.biomarker_categories:
         results = session.biomarker_categories[biomarker_category]
         for biomarker in results.biomarkers:
             concept_value = results.biomarkers[biomarker].value
-            concept_key = str(begin_concept_key) + '\\' + str(biomarker_category) + "\\" + str(biomarker)
+            if label_list[2] == "L":
+                label = "Left"
+            else:
+                label = "Right"
+            concept_key = str(begin_concept_key) + '\\' + str(biomarker_category)+ " " + str(label_list[3])+ "\\" + label + "\\" + str(biomarker)
             data_row_dict[concept_key] = concept_value
             if concept_key not in data_header_list:
                 data_header_list.append(concept_key)
                 if __name__ == "__main__":
-                    concept_key_list, tag_dict = writeOntologyTag(results, biomarker, concept_key, concept_key_list, tag_file, tag_dict)
+                    concept_key_list, tag_dict = writeOntologyTag(results, biomarker, concept_key, concept_key_list, tag_file, tag_dict, session)
 
     return data_header_list, data_row_dict, concept_key_list, tag_dict
 
 
-def writeOntologyTag(results, biomarker, concept_key, concept_key_list, tag_file, tag_dict):
+def writeOntologyTag(results, biomarker, concept_key, concept_key_list, tag_file, tag_dict, session):
     """
 
     Parameters:
@@ -321,11 +294,19 @@ def writeOntologyTag(results, biomarker, concept_key, concept_key_list, tag_file
     ontology_name = results.biomarkers[biomarker].ontology_name
     ontology_IRI = results.biomarkers[biomarker].ontology_iri
     if concept_key not in concept_key_list:
-        ontology_name_row = [concept_key, ontology_name, "Ontology name"]
-        ontology_iri_row = [concept_key, ontology_IRI, "Ontology IRI"]
+        ontology_name_row = [concept_key, "Ontology name", ontology_name]
+        ontology_iri_row = [concept_key, "Ontology IRI", ontology_IRI]
         weight = "5"
         tag_file.write('\t'.join(ontology_name_row) + '\t'+weight+'\n')
         tag_file.write('\t'.join(ontology_iri_row) + '\t'+weight+'\n')
+        if len(session.base_sessions.values()) >= 1:
+            accession_identifier = session.base_sessions.values()[0].accession_identifier
+            line = concept_key + "\taccession identifier\t" + str(accession_identifier)  + "\t5\n"
+            try:
+                found = tag_dict[line]
+            except KeyError:
+                tag_dict[line] = True
+                tag_file.write(line)
         concept_key_list.append(concept_key)
     return concept_key_list, tag_dict
 
@@ -345,15 +326,7 @@ def writeMetaData(session, tag_file, tag_dict, args):
 
     fix: Check if line is already in file
     """
-    try:
-        file_test = open(args.tags, 'r')
-        config = ConfigParser.SafeConfigParser()
-        config.read(args.tags)
-
-    except IOError:
-        print("Tags config file not found")
-        logging.critical("Tags config file not found")
-        sys.exit()
+    config = check_file_existence(args.tags, "Tags")
 
     try:
         tag_list = config.get("Tags", "Taglist").split(', ')
@@ -364,24 +337,17 @@ def writeMetaData(session, tag_file, tag_dict, args):
         elif analysis_tool:
             concept_key = (analysis_tool)
         else:
-            concept_key =   "Generic Tool"
+            concept_key = "Generic Tool"
         for tag in tag_list:
-            info_tag = getattr(session, tag)
-            if info_tag:
-                line = concept_key + "\t" + str(info_tag) + "\t" + tag.replace('_', ' ') + "\t5\n"
-                try:
-                    found = tag_dict[line]
-                except KeyError:
-                    tag_dict[line] = True
-                    tag_file.write(line)
-        if len(session.base_sessions.values()) >= 1:
-            accession_identifier = session.base_sessions.values()[0].accession_identifier
-            line = concept_key + "\t" + str(accession_identifier) + "\taccession identifier\t5\n"
             try:
-                found = tag_dict[line]
-            except KeyError:
-                tag_dict[line] = True
-                tag_file.write(line)
+                info_tag = getattr(session, tag)
+                if info_tag:
+                    line = concept_key + "\t" + tag.replace('_', ' ') + "\t" + str(info_tag) + "\t5\n"
+                    if line not in tag_dict.keys():
+                        tag_dict[line] = True
+                        tag_file.write(line)
+            except AttributeError as e:
+                None
         return concept_key, tag_dict
 
     except ConfigParser.NoSectionError as e:
@@ -422,6 +388,7 @@ def write_data(data_file, concept_file, data_list, data_header_list):
                     column_list.append(header)
         row[-1] = row[-1].replace('\t', '\n')
         data_file.write(''.join(row))
+        print(''.join(row))
         rows.append(row)
     check_subject(rows)
     data_file.close()
@@ -465,6 +432,19 @@ def check_subject(rows):
             print ("info log written")
 
 
+def check_file_existence(file, type):
+    try:
+        file_test = open(file, 'r')
+        config = ConfigParser.SafeConfigParser()
+        config.read(file)
+        return config
+
+    except IOError:
+        print("%s config file not found") % type
+        logging.critical(type + " config file not found")
+        sys.exit()
+
+
 def configError(e):
     """
     Function: Error for when a variable is not found in a config file.
@@ -476,6 +456,7 @@ def configError(e):
     if __name__ == "__main__":
         print(str(e) + "\nExit")
         sys.exit()
+
 
 def set_subject_logger(test_bool):
     subject_logger = logging.getLogger("QIBSubjects")
