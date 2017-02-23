@@ -1,84 +1,11 @@
-Concept Path	Title	Description	Weight
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1	analysis tool	MultiAtlas Appearance Model Segmentation with Volume Calculation	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1	analysis tool version	0.1	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1	analysis tool ontology name	ToolOntology	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1	analysis tool ontology iri	ToolIRI	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1	description	MultiAtlas Appearance Model Segmentation	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1	processing user name	mhansson	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1	processing site name	Erasmus MC	5
+MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1	analysis tool	MultiAtlas Appearance Model Segmentation with Volume Calculation	12
+MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1	analysis tool version	0.1	11
+MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1	analysis tool ontology name	ToolOntology	10
+MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1	analysis tool ontology iri	ToolIRI	9
+MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1	description	MultiAtlas Appearance Model Segmentation	8
+MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1	processing user name	mhansson	7
+MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1	processing site name	Erasmus MC	6
 MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1	paper title	http://Automated brain structure segmentation based on atlas registration and appearance models	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1	paper url	http://freesurfer.net/fswiki/FreeSurferMethodsCitation?action=AttachFile&do=view&target=freesurfer_methods.doc	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1	paper notes	Method is a variant of version described in paper (no MRF model for spatial coherence	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1	review status	Not reviewed	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T0\Left\1 volume (mm^3)	Ontology name	Uberon	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T0\Left\1 volume (mm^3)	Ontology IRI	NA	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T0\Left\1 volume (mm^3)	accession identifier	XNAT_Proof_E00004	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T0\Left\0 volume (mm^3)	Ontology name	Uberon	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T0\Left\0 volume (mm^3)	Ontology IRI	NA	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T0\Left\0 volume (mm^3)	accession identifier	XNAT_Proof_E00004	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T0\Left\entire (masked) image volume (mm^3)	Ontology name	Uberon	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T0\Left\entire (masked) image volume (mm^3)	Ontology IRI	NA	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T0\Left\entire (masked) image volume (mm^3)	accession identifier	XNAT_Proof_E00004	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T1\Left\1 volume (mm^3)	Ontology name	Uberon	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T1\Left\1 volume (mm^3)	Ontology IRI	NA	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T1\Left\1 volume (mm^3)	accession identifier	XNAT_Proof_E00003	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T1\Left\0 volume (mm^3)	Ontology name	Uberon	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T1\Left\0 volume (mm^3)	Ontology IRI	NA	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T1\Left\0 volume (mm^3)	accession identifier	XNAT_Proof_E00003	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T1\Left\entire (masked) image volume (mm^3)	Ontology name	Uberon	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T1\Left\entire (masked) image volume (mm^3)	Ontology IRI	NA	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T1\Left\entire (masked) image volume (mm^3)	accession identifier	XNAT_Proof_E00003	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T3\Left\1 volume (mm^3)	Ontology name	Uberon	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T3\Left\1 volume (mm^3)	Ontology IRI	NA	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T3\Left\1 volume (mm^3)	accession identifier	XNAT_Proof_E00001	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T3\Left\0 volume (mm^3)	Ontology name	Uberon	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T3\Left\0 volume (mm^3)	Ontology IRI	NA	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T3\Left\0 volume (mm^3)	accession identifier	XNAT_Proof_E00001	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T3\Left\entire (masked) image volume (mm^3)	Ontology name	Uberon	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T3\Left\entire (masked) image volume (mm^3)	Ontology IRI	NA	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T3\Left\entire (masked) image volume (mm^3)	accession identifier	XNAT_Proof_E00001	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T7\Left\1 volume (mm^3)	Ontology name	Uberon	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T7\Left\1 volume (mm^3)	Ontology IRI	NA	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T7\Left\1 volume (mm^3)	accession identifier	XNAT_Proof_E00007	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T7\Left\0 volume (mm^3)	Ontology name	Uberon	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T7\Left\0 volume (mm^3)	Ontology IRI	NA	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T7\Left\0 volume (mm^3)	accession identifier	XNAT_Proof_E00007	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T7\Left\entire (masked) image volume (mm^3)	Ontology name	Uberon	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T7\Left\entire (masked) image volume (mm^3)	Ontology IRI	NA	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T7\Left\entire (masked) image volume (mm^3)	accession identifier	XNAT_Proof_E00007	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T0\Right\1 volume (mm^3)	Ontology name	Uberon	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T0\Right\1 volume (mm^3)	Ontology IRI	NA	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T0\Right\1 volume (mm^3)	accession identifier	XNAT_Proof_E00005	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T0\Right\0 volume (mm^3)	Ontology name	Uberon	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T0\Right\0 volume (mm^3)	Ontology IRI	NA	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T0\Right\0 volume (mm^3)	accession identifier	XNAT_Proof_E00005	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T0\Right\entire (masked) image volume (mm^3)	Ontology name	Uberon	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T0\Right\entire (masked) image volume (mm^3)	Ontology IRI	NA	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T0\Right\entire (masked) image volume (mm^3)	accession identifier	XNAT_Proof_E00005	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T1\Right\1 volume (mm^3)	Ontology name	Uberon	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T1\Right\1 volume (mm^3)	Ontology IRI	NA	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T1\Right\1 volume (mm^3)	accession identifier	XNAT_Proof_E00002	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T1\Right\0 volume (mm^3)	Ontology name	Uberon	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T1\Right\0 volume (mm^3)	Ontology IRI	NA	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T1\Right\0 volume (mm^3)	accession identifier	XNAT_Proof_E00002	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T1\Right\entire (masked) image volume (mm^3)	Ontology name	Uberon	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T1\Right\entire (masked) image volume (mm^3)	Ontology IRI	NA	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T1\Right\entire (masked) image volume (mm^3)	accession identifier	XNAT_Proof_E00002	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T3\Right\1 volume (mm^3)	Ontology name	Uberon	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T3\Right\1 volume (mm^3)	Ontology IRI	NA	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T3\Right\1 volume (mm^3)	accession identifier	XNAT_Proof_E00006	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T3\Right\0 volume (mm^3)	Ontology name	Uberon	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T3\Right\0 volume (mm^3)	Ontology IRI	NA	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T3\Right\0 volume (mm^3)	accession identifier	XNAT_Proof_E00006	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T3\Right\entire (masked) image volume (mm^3)	Ontology name	Uberon	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T3\Right\entire (masked) image volume (mm^3)	Ontology IRI	NA	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T3\Right\entire (masked) image volume (mm^3)	accession identifier	XNAT_Proof_E00006	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T7\Right\1 volume (mm^3)	Ontology name	Uberon	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T7\Right\1 volume (mm^3)	Ontology IRI	NA	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T7\Right\1 volume (mm^3)	accession identifier	XNAT_Proof_E00008	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T7\Right\0 volume (mm^3)	Ontology name	Uberon	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T7\Right\0 volume (mm^3)	Ontology IRI	NA	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T7\Right\0 volume (mm^3)	accession identifier	XNAT_Proof_E00008	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T7\Right\entire (masked) image volume (mm^3)	Ontology name	Uberon	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T7\Right\entire (masked) image volume (mm^3)	Ontology IRI	NA	5
-MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\Femoral Cartilage Volume T7\Right\entire (masked) image volume (mm^3)	accession identifier	XNAT_Proof_E00008	5
+MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1	paper url	http://freesurfer.net/fswiki/FreeSurferMethodsCitation?action=AttachFile&do=view&target=freesurfer_methods.doc	4
+MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1	paper notes	Method is a variant of version described in paper (no MRF model for spatial coherence	3
+MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1	review status	Not reviewed	2

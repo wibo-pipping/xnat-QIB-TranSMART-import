@@ -34,6 +34,7 @@ elif sys.version_info.major == 2:
     import ConfigParser
 import re 
 import time
+import shutil
 
 
 class TestQIBDatatypeRetrieval(unittest.TestCase):
@@ -46,10 +47,9 @@ class TestQIBDatatypeRetrieval(unittest.TestCase):
         parser.add_argument("--connection")
         args = parser.parse_args()        
         args.connection = conf_file
-        project = QIBPrototype.make_connection(args)
-        return project
+        project, connection = QIBPrototype.make_connection(args)
+        return project, connection
 
-    
     def empty_file(self, file_name):
         with open(file_name, 'w') as file_:
             file_.write("")
@@ -58,15 +58,16 @@ class TestQIBDatatypeRetrieval(unittest.TestCase):
 
     def test_main_connection(self):
         conf_file = 'test_files/test_confs/test.conf'
-        project = self.setup(conf_file)
+        project, connection = self.setup(conf_file)
         assert_not_equal(project, None)
+        connection.disconnect()
 
     def test_wrong_connection(self):
         parser = argparse.ArgumentParser()
         parser.add_argument("--connection")
         args = parser.parse_args()        
         args.connection = "test_files/test_confs/fail_conn.conf"
-        project = QIBPrototype.make_connection(args)
+        project, connection = QIBPrototype.make_connection(args)
         print(project)
         self.assertEqual(project.__class__.__name__, "ConnectionError")
 
@@ -75,7 +76,7 @@ class TestQIBDatatypeRetrieval(unittest.TestCase):
         parser.add_argument("--connection")
         args = parser.parse_args()        
         args.connection = "test_files/test_confs/wrong_project.conf"
-        project = QIBPrototype.make_connection(args)
+        project, connection = QIBPrototype.make_connection(args)
         self.assertEqual(project, None)
 
     def test_create_dir_structure(self):
@@ -102,19 +103,15 @@ class TestQIBDatatypeRetrieval(unittest.TestCase):
 
         with open(path + '/tags/tags.params', 'r') as tag_param_file:
             with open('test_files/tags.params', 'r') as test_tag_param_file:
-                assert tag_param_file.read() == test_tag_param_file.read()
+                self.assertEqual(tag_param_file.read(), test_tag_param_file.read())
 
         with open(path + '/clinical/clinical.params', 'r') as clinical_param_file:
             with open('test_files/clinical.params', 'r') as test_clinical_param_file:
-                print(clinical_param_file.read())
-                print(test_clinical_param_file.read())
-                assert clinical_param_file.read() == test_clinical_param_file.read()
+                self.assertEqual(clinical_param_file.read(), test_clinical_param_file.read())
 
         with open(path + '/study.params', 'r') as study_param_file:
             with open('test_files/study.params', 'r') as test_study_param_file:
-                print(study_param_file.read())
-                print(test_study_param_file.read())
-                assert study_param_file.read() == test_study_param_file.read()
+                self.assertEqual(study_param_file.read(), test_study_param_file.read())
 
     def test_write_headers(self):
         parser = argparse.ArgumentParser()
@@ -123,7 +120,9 @@ class TestQIBDatatypeRetrieval(unittest.TestCase):
         args.params = "test_files/test_confs/test.conf"
         config = ConfigParser.ConfigParser()
         config.read(args.params)
-        path = config.get('Study', 'STUDY_ID')
+        path = config.get('Directory', 'path')
+        study_id = config.get('Study', 'STUDY_ID')
+        path = path+study_id
         tag_file, data_file, concept_file = QIBPrototype.write_headers(path, args)
 
         assert os.path.exists(os.path.realpath(tag_file.name))
@@ -142,7 +141,7 @@ class TestQIBDatatypeRetrieval(unittest.TestCase):
         header_test_list = ['subject', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T0\\Left\\1 volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T0\\Left\\0 volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T0\\Left\\entire (masked) image volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T1\\Left\\1 volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T1\\Left\\0 volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T1\\Left\\entire (masked) image volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T3\\Left\\1 volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T3\\Left\\0 volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T3\\Left\\entire (masked) image volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T7\\Left\\1 volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T7\\Left\\0 volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T7\\Left\\entire (masked) image volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T0\\Right\\1 volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T0\\Right\\0 volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T0\\Right\\entire (masked) image volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T1\\Right\\1 volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T1\\Right\\0 volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T1\\Right\\entire (masked) image volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T3\\Right\\1 volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T3\\Right\\0 volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T3\\Right\\entire (masked) image volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T7\\Right\\1 volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T7\\Right\\0 volume (mm^3)', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Femoral Cartilage Volume T7\\Right\\entire (masked) image volume (mm^3)']
         conf_file = 'test_files/test_confs/test.conf'
         tag_file = open("test.txt", "w")
-        project = self.setup(conf_file)
+        project, connection = self.setup(conf_file)
         parser = argparse.ArgumentParser()
         parser.add_argument("--params")
         args = parser.parse_args()
@@ -152,26 +151,29 @@ class TestQIBDatatypeRetrieval(unittest.TestCase):
         os.remove(tag_file.name)
         self.assertEqual(data_structure, data_list)
         self.assertEqual(data_header_list, header_test_list)
+        connection.disconnect()
 
 
     def test_no_QIB(self):
         config = ConfigParser.ConfigParser()
         config.read("test_files/test_confs/test.conf")
         study_id = config.get('Study', 'STUDY_ID')
-        tagFile = open(study_id+"/tags/tags.txt", "w")
+        path = config.get('Directory', 'path')
+        tagFile = open(path+study_id+"/tags/tags.txt", "w")
         conf_file = "test_files/test_confs/no_QIB.conf"
         parser = argparse.ArgumentParser()
         parser.add_argument("--params")
         args = parser.parse_args()
         args.tags = conf_file
-        project = self.setup(conf_file)
+        project, connection = self.setup(conf_file)
         data_list = QIBPrototype.obtain_data(project, tagFile, args)
         self.assertEqual(data_list, [])
+        connection.disconnect()
 
     def test_write_meta_data(self):
         tag_file = open("test.txt", "w")
         conf_file = 'test_files/test_confs/test.conf'
-        project = self.setup(conf_file)
+        project, connection = self.setup(conf_file)
         parser = argparse.ArgumentParser()
         parser.add_argument("--params")
         args = parser.parse_args()
@@ -180,10 +182,9 @@ class TestQIBDatatypeRetrieval(unittest.TestCase):
         tag_file.flush()
         with open("test.txt", "r") as tag_read_file:
             with open(self.file_path+ "tagstest.txt") as tag_test_file:
-                print(tag_read_file.read())
-                print(tag_test_file.read())
                 self.assertEqual(tag_read_file.read(), tag_test_file.read())
         os.remove(tag_file.name)
+        connection.disconnect()
 
     def test_write_data(self):
         data_file_name = "writedata.txt"
@@ -251,6 +252,14 @@ class TestQIBDatatypeRetrieval(unittest.TestCase):
                     if re.match(current_date+time_regex+test_log, line):
                         not_found = False
         assert not_found
+
+    @classmethod
+    def tearDownClass(self):
+        conf_file = 'test_files/test_confs/test.conf'
+        config = ConfigParser.ConfigParser()
+        config.read(conf_file)
+        path = config.get('Directory', 'path')
+        shutil.rmtree(path)
 
 
 if __name__ == '__main__':

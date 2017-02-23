@@ -57,9 +57,12 @@ def main(args):
     Parameters:
         -args   ArgumentParser      Contains the location of the configuration files.
     """
+
+    #Maybe create an object for the config reading part. Because it's taking in a lot of space.
+    #Maybe create a liberary of this script and a seperate one as running script.
     logging.info("Start.")
     print('Establishing connection\n')
-    project = make_connection(args)
+    project, connection = make_connection(args)
 
     print('Creating directory structure\n')
     path = create_dir(args)
@@ -78,6 +81,7 @@ def main(args):
     write_data(data_file, concept_file, data_list, data_header_list)
     logging.info("Data written to files.")
 
+    connection.disconnect()
     logging.info("Exit.")
 
 
@@ -97,7 +101,7 @@ def make_connection(args):
         connection = xnat.connect(connection_name, user=user, password=pssw)
         project = connection.projects[project_name]
         logging.info("Connection established.")
-        return project
+        return project, connection
 
     except ConfigParser.NoSectionError as e:
         configError(e)
@@ -108,7 +112,7 @@ def make_connection(args):
         if __name__ == "__main__":
             sys.exit()
         else:
-            return None
+            return None, None
 
     except Exception as e:
         print(str(e) + "\nExit")
@@ -116,7 +120,7 @@ def make_connection(args):
             logging.critical(e.message)
             sys.exit()
         else:
-            return e
+            return e, None
 
 
 def create_dir(args):
@@ -131,6 +135,7 @@ def create_dir(args):
         base_path = config.get('Directory', 'path')
         new_path = config.get('Study', 'STUDY_ID')
         path = base_path+new_path
+        #Test if the /tags/ and /clinical are also there
         if not os.path.exists(path):
             os.makedirs(path)
             os.makedirs(path + "/tags/")
@@ -186,6 +191,7 @@ def write_headers(path, args):
         data_file = open(path + '/clinical/' + study_id + '_clinical.txt', 'w')
         concept_file = open(path + '/clinical/' + study_id + '_columns.txt', 'w')
         tag_file = open(path + '/tags/tags.txt', 'w')
+        #Hardcoded right now, because transmart does not need other headers. But this can be subject to change.
         concept_headers = ['Filename', 'Category Code', 'Column Number', 'Data Label']
         tag_headers = ['Concept Path', 'Title', 'Description', 'Weight']
         concept_file.write("\t".join(concept_headers) + '\n')
@@ -218,11 +224,10 @@ def obtain_data(project, tag_file, args):
         subject_obj = project.subjects[subject.label]
         for experiment in subject_obj.experiments.values():
             if "qib" in experiment.label.lower():
-                print(experiment.label.lower())
+                #Make number of returns and parameters less.
                 data_header_list, data_row_dict, concept_key_list, tag_dict = retrieveQIB(subject_obj, experiment, tag_file, data_row_dict,
                                                                                           subject, data_header_list, concept_key_list, tag_dict, args)
         data_list.append(data_row_dict)
-    print(data_header_list)
     if data_list == [{}] or data_list == []:
         logging.warning("No QIB datatypes found.")
         print("No QIB datatypes found.\nExit")
@@ -263,9 +268,10 @@ def retrieveQIB(subject_obj, experiment, tag_file, data_row_dict, subject, data_
         results = session.biomarker_categories[biomarker_category]
         for biomarker in results.biomarkers:
             concept_value = results.biomarkers[biomarker].value
-            if label_list[2] == "L":
+            label = label_list[2]
+            if label_list[2].lower() == "l":
                 label = "Left"
-            else:
+            elif label_list[2].lower() == "r":
                 label = "Right"
             concept_key = str(begin_concept_key) + '\\' + str(biomarker_category)+ " " + str(label_list[3])+ "\\" + label + "\\" + str(biomarker)
             data_row_dict[concept_key] = concept_value
@@ -296,15 +302,13 @@ def writeOntologyTag(results, biomarker, concept_key, concept_key_list, tag_file
     if concept_key not in concept_key_list:
         ontology_name_row = [concept_key, "Ontology name", ontology_name]
         ontology_iri_row = [concept_key, "Ontology IRI", ontology_IRI]
-        weight = "5"
+        weight = "1"
         tag_file.write('\t'.join(ontology_name_row) + '\t'+weight+'\n')
         tag_file.write('\t'.join(ontology_iri_row) + '\t'+weight+'\n')
         if len(session.base_sessions.values()) >= 1:
             accession_identifier = session.base_sessions.values()[0].accession_identifier
-            line = concept_key + "\taccession identifier\t" + str(accession_identifier)  + "\t5\n"
-            try:
-                found = tag_dict[line]
-            except KeyError:
+            line = concept_key + "\taccession identifier\t" + str(accession_identifier) + "\t2\n"
+            if line in tag_dict.keys():
                 tag_dict[line] = True
                 tag_file.write(line)
         concept_key_list.append(concept_key)
@@ -323,8 +327,6 @@ def writeMetaData(session, tag_file, tag_dict, args):
     Returns:
          - concept_key   String          concept key for TranSMART
 
-
-    fix: Check if line is already in file
     """
     config = check_file_existence(args.tags, "Tags")
 
@@ -338,16 +340,18 @@ def writeMetaData(session, tag_file, tag_dict, args):
             concept_key = (analysis_tool)
         else:
             concept_key = "Generic Tool"
+        i = len(tag_list)
         for tag in tag_list:
             try:
                 info_tag = getattr(session, tag)
                 if info_tag:
-                    line = concept_key + "\t" + tag.replace('_', ' ') + "\t" + str(info_tag) + "\t5\n"
+                    line = concept_key + "\t" + tag.replace('_', ' ') + "\t" + str(info_tag) + "\t"+str(i)+"\n"
+                    i -= 1
                     if line not in tag_dict.keys():
                         tag_dict[line] = True
                         tag_file.write(line)
-            except AttributeError as e:
-                None
+            except AttributeError:
+                logging.info(tag + " not found for " + str(concept_key))
         return concept_key, tag_dict
 
     except ConfigParser.NoSectionError as e:
@@ -369,6 +373,7 @@ def write_data(data_file, concept_file, data_list, data_header_list):
     for line in data_list:
         row = []
         i = 0
+
         while i < len(data_header_list):
             row.append('\t')
             i += 1
@@ -401,6 +406,8 @@ def check_subject(rows):
     Parameters:
         - rows   List    List containing lists with the retrieved QIB information of a subject.
     """
+    #Could become slow, because of the way it is checking if a row is already presented. Also needs a way to read the header for each datapiece.
+
     if __name__ != "__main__":
         set_subject_logger(True)
         subject_logger = logging.getLogger("QIBSubjects")

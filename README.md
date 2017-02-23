@@ -3,8 +3,7 @@
 **Function:** Connect to an XNAT instance. There the script finds the QIB datatypes from XNAT.
 These datatypes are than transformed into a directory structure that can be uploaded to TranSMART.
 
-**Functional:** The script is tested with Python2.7. Testing with Python3 now fails, because of an XNATpy error.
-
+**Functional:** The script is tested with Python2.7 and Python3.6
 
 **Requirements:**
 - *xnatpy*      Downloadable here: https://bitbucket.org/bigr_erasmusmc/xnatpy, for Python3 use the feature/xsdparse branch.
@@ -48,16 +47,13 @@ TOP_NODE =
 Taglist =
 ```
 
-TODO:
-Make the script functional with python3. Right now it returns an error from XNAT.
-
 
 ## Testing
 
 Testing can be done by entering
 
 ```
-nosestests
+python test_QIB.py
 ```
 
 on the command line.
