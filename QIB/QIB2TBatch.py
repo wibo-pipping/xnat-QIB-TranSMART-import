@@ -40,71 +40,29 @@ Taglist =
 
 """
 
-
-import argparse
 import os
 import sys
 import logging
+import xnat
+
 if sys.version_info.major == 3:
     import configparser as ConfigParser
 elif sys.version_info.major == 2:
     import ConfigParser
-import xnat
-
-def main(args):
-    """
-    Function: Call all the methods, passing along all the needed variables.
-    Parameters:
-        -args   ArgumentParser      Contains the location of the configuration files.
-    """
-
-    #Maybe create an object for the config reading part. Because it's taking in a lot of space.
-    #Maybe create a liberary of this script and a seperate one as running script.
-    logging.info("Start.")
-    print('Establishing connection\n')
-    project, connection = make_connection(args)
-
-    print('Creating directory structure\n')
-    path = create_dir(args)
-
-    print('Write .params files\n')
-    write_params(path, args)
-
-    print('Write headers\n')
-    tag_file, data_file, concept_file = write_headers(path, args)
-
-    print('Obtaining data from XNAT\n')
-    data_list, data_header_list = obtain_data(project, tag_file, args)
-    logging.info("Data obtained from XNAT.")
-
-    print('Write data to files\n')
-    write_data(data_file, concept_file, data_list, data_header_list)
-    logging.info("Data written to files.")
-
-    connection.disconnect()
-    logging.info("Exit.")
 
 
-def make_connection(args):
+def make_connection(config):
     """
     Function: Create the connection to XNAT.
     Returns: 
         -project    xnatpy object   Xnat connection to a specific project.
     """
-    config = check_file_existence(args.connection, "connection")
 
     try:
-        connection_name = config.get('Connection', 'url')
-        user = config.get('Connection', 'user')
-        pssw = config.get('Connection', 'password')
-        project_name = config.get('Connection', 'project')
-        connection = xnat.connect(connection_name, user=user, password=pssw)
-        project = connection.projects[project_name]
+        connection = xnat.connect(config.connection_name, user=config.user, password=config.pssw)
+        project = connection.projects[config.project_name]
         logging.info("Connection established.")
         return project, connection
-
-    except ConfigParser.NoSectionError as e:
-        configError(e)
 
     except KeyError:
         print("Project not found in XNAT.\nExit")
@@ -123,58 +81,43 @@ def make_connection(args):
             return e, None
 
 
-def create_dir(args):
+def create_dir(config):
     """
     Function: Create the directory structure.
     Returns: 
         -new_path    String   Path to the directory where all the files will be saved.
     """
-    config = check_file_existence(args.params, "params")
 
-    try:
-        base_path = config.get('Directory', 'path')
-        new_path = config.get('Study', 'STUDY_ID')
-        path = base_path+new_path
-        #Test if the /tags/ and /clinical are also there
-        if not os.path.exists(path):
-            os.makedirs(path)
-            os.makedirs(path + "/tags/")
-            os.makedirs(path + "/clinical/")
-        return path
-
-    except ConfigParser.NoSectionError as e:
-        configError(e)
+    path = config.base_path + config.study_id
+    if not os.path.exists(path):
+        os.makedirs(path)
+    if not os.path.exists(path + "/tags/"):
+        os.makedirs(path + "/tags/")
+    if not os.path.exists(path + "/clinical/"):
+        os.makedirs(path + "/clinical/")
+    return path
 
 
-def write_params(path, args):
+def write_params(path, config):
     """
     Function: Uses the configuration files to write the .params files.
     Parameters:
         -path   String  Path to the directory where all the files will be saved.
     """
-    config = check_file_existence(args.params, "Params")
-
-    try:
-        study_id = config.get('Study', "STUDY_ID")
-        security_req = config.get('Study', 'SECURITY_REQUIRED')
-        top_node = config.get('Study', 'TOP_NODE')
-        tag_param_file = open(path + '/tags/tags.params', 'w')
-        tag_param_file.write("TAGS_FILE=tags.txt")
-        study_param_file = open(path + '/study.params', 'w')
-        study_param_file.write("STUDY_ID=" + study_id +
-                         "\nSECURITY_REQUIRED=" + security_req +
-                         "\nTOP_NODE=" + top_node)
-        clinical_param_file = open(path + '/clinical/clinical.params', 'w')
-        clinical_param_file.write("COLUMN_MAP_FILE=" + str(study_id) + "_columns.txt")
-        tag_param_file.close()
-        study_param_file.close()
-        clinical_param_file.close()
-
-    except ConfigParser.NoSectionError as e:
-        configError(e)
+    tag_param_file = open(path + '/tags/tags.params', 'w')
+    tag_param_file.write("TAGS_FILE=tags.txt")
+    study_param_file = open(path + '/study.params', 'w')
+    study_param_file.write("STUDY_ID=" + config.study_id +
+                           "\nSECURITY_REQUIRED=" + config.security_req +
+                           "\nTOP_NODE=" + config.top_node)
+    clinical_param_file = open(path + '/clinical/clinical.params', 'w')
+    clinical_param_file.write("COLUMN_MAP_FILE=" + str(config.study_id) + "_columns.txt")
+    tag_param_file.close()
+    study_param_file.close()
+    clinical_param_file.close()
 
 
-def write_headers(path, args):
+def write_headers(path, config):
     """
     Function: Uses the configuration files to write the headers of the .txt files. 
     Parameters:
@@ -184,28 +127,22 @@ def write_headers(path, args):
         -data_file       File    (STUDY_ID)_clinical.txt, used to upload the clinical data into TranSMART.
         -concept_file    File    (STUDY_ID)_columns.txt, used to determine which values are in which columns for uploading to TranSMART.
     """
-    config = check_file_existence(args.params, "Params")
 
-    try:
-        study_id = config.get('Study', "STUDY_ID")
-        data_file = open(path + '/clinical/' + study_id + '_clinical.txt', 'w')
-        concept_file = open(path + '/clinical/' + study_id + '_columns.txt', 'w')
-        tag_file = open(path + '/tags/tags.txt', 'w')
-        #Hardcoded right now, because transmart does not need other headers. But this can be subject to change.
-        concept_headers = ['Filename', 'Category Code', 'Column Number', 'Data Label']
-        tag_headers = ['Concept Path', 'Title', 'Description', 'Weight']
-        concept_file.write("\t".join(concept_headers) + '\n')
-        tag_file.write("\t".join(tag_headers) + "\n")
-        tag_file.flush()
-        data_file.flush()
-        concept_file.flush()
-        return tag_file, data_file, concept_file
-
-    except ConfigParser.NoSectionError as e:
-        configError(e)
+    data_file = open(path + '/clinical/' + config.study_id + '_clinical.txt', 'w')
+    concept_file = open(path + '/clinical/' + config.study_id + '_columns.txt', 'w')
+    tag_file = open(path + '/tags/tags.txt', 'w')
+    # Hardcoded right now, because transmart does not need other headers. But this can be subject to change.
+    concept_headers = ['Filename', 'Category Code', 'Column Number', 'Data Label']
+    tag_headers = ['Concept Path', 'Title', 'Description', 'Weight']
+    concept_file.write("\t".join(concept_headers) + '\n')
+    tag_file.write("\t".join(tag_headers) + "\n")
+    tag_file.flush()
+    data_file.flush()
+    concept_file.flush()
+    return tag_file, data_file, concept_file
 
 
-def obtain_data(project, tag_file, args):
+def obtain_data(project, tag_file, patient_map, config):
     """
     Function: Obtains all the QIB data from the XNAT project.
     Parameters: 
@@ -224,9 +161,12 @@ def obtain_data(project, tag_file, args):
         subject_obj = project.subjects[subject.label]
         for experiment in subject_obj.experiments.values():
             if "qib" in experiment.label.lower():
-                #Make number of returns and parameters less.
-                data_header_list, data_row_dict, concept_key_list, tag_dict = retrieveQIB(subject_obj, experiment, tag_file, data_row_dict,
-                                                                                          subject, data_header_list, concept_key_list, tag_dict, args)
+                # Make number of returns and parameters less.
+                data_header_list, data_row_dict, concept_key_list, tag_dict = retrieveQIB(subject_obj, experiment,
+                                                                                          tag_file, data_row_dict,
+                                                                                          subject, data_header_list,
+                                                                                          concept_key_list, tag_dict,
+                                                                                          patient_map, config)
         data_list.append(data_row_dict)
     if data_list == [{}] or data_list == []:
         logging.warning("No QIB datatypes found.")
@@ -239,7 +179,8 @@ def obtain_data(project, tag_file, args):
     return data_list, data_header_list
 
 
-def retrieveQIB(subject_obj, experiment, tag_file, data_row_dict, subject, data_header_list, concept_key_list, tag_dict, args):
+def retrieveQIB(subject_obj, experiment, tag_file, data_row_dict, subject, data_header_list, concept_key_list, tag_dict,
+                patient_map, config):
     """
     Function: Retrieve the biomarker information from the QIB datatype.
     
@@ -258,8 +199,8 @@ def retrieveQIB(subject_obj, experiment, tag_file, data_row_dict, subject, data_
         - concept_key_list    List            List containing all the concept keys so far.
     """
     session = subject_obj.experiments[experiment.label]
-    begin_concept_key, tag_dict = writeMetaData(session, tag_file, tag_dict, args)
-    data_row_dict['subject'] = subject.label
+    begin_concept_key, tag_dict = writeMetaData(session, tag_file, tag_dict, config)
+    data_row_dict['subject'] = patient_map[subject.label]
     if 'subject' not in data_header_list:
         data_header_list.append('subject')
 
@@ -273,12 +214,14 @@ def retrieveQIB(subject_obj, experiment, tag_file, data_row_dict, subject, data_
                 label = "Left"
             elif label_list[2].lower() == "r":
                 label = "Right"
-            concept_key = str(begin_concept_key) + '\\' + str(biomarker_category)+ " " + str(label_list[3])+ "\\" + label + "\\" + str(biomarker)
+            concept_key = str(begin_concept_key) + '\\' + str(biomarker_category) + " " + str(
+                label_list[3]) + "\\" + label + "\\" + str(biomarker)
             data_row_dict[concept_key] = concept_value
             if concept_key not in data_header_list:
                 data_header_list.append(concept_key)
                 if __name__ == "__main__":
-                    concept_key_list, tag_dict = writeOntologyTag(results, biomarker, concept_key, concept_key_list, tag_file, tag_dict, session)
+                    concept_key_list, tag_dict = writeOntologyTag(results, biomarker, concept_key, concept_key_list,
+                                                                  tag_file, tag_dict, session)
 
     return data_header_list, data_row_dict, concept_key_list, tag_dict
 
@@ -303,8 +246,8 @@ def writeOntologyTag(results, biomarker, concept_key, concept_key_list, tag_file
         ontology_name_row = [concept_key, "Ontology name", ontology_name]
         ontology_iri_row = [concept_key, "Ontology IRI", ontology_IRI]
         weight = "1"
-        tag_file.write('\t'.join(ontology_name_row) + '\t'+weight+'\n')
-        tag_file.write('\t'.join(ontology_iri_row) + '\t'+weight+'\n')
+        tag_file.write('\t'.join(ontology_name_row) + '\t' + weight + '\n')
+        tag_file.write('\t'.join(ontology_iri_row) + '\t' + weight + '\n')
         if len(session.base_sessions.values()) >= 1:
             accession_identifier = session.base_sessions.values()[0].accession_identifier
             line = concept_key + "\taccession identifier\t" + str(accession_identifier) + "\t2\n"
@@ -315,7 +258,7 @@ def writeOntologyTag(results, biomarker, concept_key, concept_key_list, tag_file
     return concept_key_list, tag_dict
 
 
-def writeMetaData(session, tag_file, tag_dict, args):
+def writeMetaData(session, tag_file, tag_dict, config):
     """
     Function: Write the metadata tags to the tag file.
 
@@ -328,34 +271,28 @@ def writeMetaData(session, tag_file, tag_dict, args):
          - concept_key   String          concept key for TranSMART
 
     """
-    config = check_file_existence(args.tags, "Tags")
 
-    try:
-        tag_list = config.get("Tags", "Taglist").split(', ')
-        analysis_tool = getattr(session, "analysis_tool")
-        analysis_tool_version = getattr(session, "analysis_tool_version")
-        if analysis_tool and analysis_tool_version:
-            concept_key = str(analysis_tool + " " + analysis_tool_version)
-        elif analysis_tool:
-            concept_key = (analysis_tool)
-        else:
-            concept_key = "Generic Tool"
-        i = len(tag_list)
-        for tag in tag_list:
-            try:
-                info_tag = getattr(session, tag)
-                if info_tag:
-                    line = concept_key + "\t" + tag.replace('_', ' ') + "\t" + str(info_tag) + "\t"+str(i)+"\n"
-                    i -= 1
-                    if line not in tag_dict.keys():
-                        tag_dict[line] = True
-                        tag_file.write(line)
-            except AttributeError:
-                logging.info(tag + " not found for " + str(concept_key))
-        return concept_key, tag_dict
-
-    except ConfigParser.NoSectionError as e:
-        configError(e)
+    analysis_tool = getattr(session, "analysis_tool")
+    analysis_tool_version = getattr(session, "analysis_tool_version")
+    if analysis_tool and analysis_tool_version:
+        concept_key = str(analysis_tool + " " + analysis_tool_version)
+    elif analysis_tool:
+        concept_key = (analysis_tool)
+    else:
+        concept_key = "Generic Tool"
+    i = len(config.tag_list)
+    for tag in config.tag_list:
+        try:
+            info_tag = getattr(session, tag)
+            if info_tag:
+                line = concept_key + "\t" + tag.replace('_', ' ') + "\t" + str(info_tag) + "\t" + str(i) + "\n"
+                i -= 1
+                if line not in tag_dict.keys():
+                    tag_dict[line] = True
+                    tag_file.write(line)
+        except AttributeError:
+            logging.info(tag + " not found for " + str(concept_key))
+    return concept_key, tag_dict
 
 
 def write_data(data_file, concept_file, data_list, data_header_list):
@@ -406,7 +343,7 @@ def check_subject(rows):
     Parameters:
         - rows   List    List containing lists with the retrieved QIB information of a subject.
     """
-    #Could become slow, because of the way it is checking if a row is already presented. Also needs a way to read the header for each datapiece.
+    # Could become slow, because of the way it is checking if a row is already presented. Also needs a way to read the header for each datapiece.
 
     if __name__ != "__main__":
         set_subject_logger(True)
@@ -439,11 +376,11 @@ def check_subject(rows):
             print ("info log written")
 
 
-def check_file_existence(file, type):
+def check_file_existence(file_, type):
     try:
-        file_test = open(file, 'r')
+        file_test = open(file_, 'r')
         config = ConfigParser.SafeConfigParser()
-        config.read(file)
+        config.read(file_)
         return config
 
     except IOError:
@@ -466,6 +403,7 @@ def configError(e):
 
 
 def set_subject_logger(test_bool):
+    logging.basicConfig(filename="QIBlog.log", format='%(asctime)s:%(levelname)s:%(message)s', level=logging.INFO)
     subject_logger = logging.getLogger("QIBSubjects")
     subject_logger.setLevel(logging.INFO)
 
@@ -478,14 +416,13 @@ def set_subject_logger(test_bool):
     subform = logging.Formatter('%(asctime)s:%(message)s')
     ch.setFormatter(subform)
     subject_logger.addHandler(ch)
+    return subject_logger
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--connection", help="Location of the configuration file for establishing XNAT connection.")
-    parser.add_argument("--params", help="Location of the configuration file for the variables in the .params files.")
-    parser.add_argument("--tags", help="Location of the configuration file for the tags.")
-    args = parser.parse_args()
-    logging.basicConfig(filename="QIBlog.log", format='%(asctime)s:%(levelname)s:%(message)s', level=logging.INFO)
-    set_subject_logger(False)
-    main(args)
+def get_patient_mapping(config):
+    patient_dict = {}
+    with open(config.patient_file, 'r') as patient_file:
+        for line in patient_file:
+            line_list = line.replace("\n","").split('\t')
+            patient_dict[line_list[0]] = line_list[1]
+    return patient_dict
