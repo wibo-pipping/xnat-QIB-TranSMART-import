@@ -118,9 +118,7 @@ class TestQIBDatatypeRetrieval(unittest.TestCase):
 
     def test_write_headers(self):
         args = argparse.ArgumentParser().parse_args()
-        args.params = self.configPath+"test.conf"
-        args.connection = self.configPath+"test.conf"
-        args.tags = self.configPath+"test.conf"
+        args.all = self.configPath+"test.conf"
         config = ConfigStorage(args)
         path = config.base_path+config.study_id
         tag_file, data_file, concept_file = QIB2TBatch.write_headers(path, config)
@@ -137,16 +135,16 @@ class TestQIBDatatypeRetrieval(unittest.TestCase):
             self.assertEqual(first_line, "\t".join(['Filename', 'Category Code', 'Column Number', 'Data Label'])+"\n")
 
     def test_obtain_data(self):
-        data_structure = [{'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Cartilage T0\\Left\\Patellar cartilage volume': u'2457600.0', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Bone T0\\Left\\Femur volume': u'10980.625', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Cartilage T0\\Left\\Femoral cartilage volume': u'6980.625', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\General Results T0\\Left\\Time elapsed since baseline': u'11', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Bone T0\\Left\\Patella volume': u'2450619.375', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Cartilage T0\\Left\\Lateral Tibial Cartilage volume': u'2450619.375', 'subject': u'PROOF001'}]
+        data_structure = [{'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Cartilage T0\\Left\\Patellar cartilage volume': u'2457600.0', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Bone T0\\Left\\Femur volume': u'10980.625', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Cartilage T0\\Left\\Femoral cartilage volume': u'6980.625', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\General Results T0\\Left\\Time elapsed since baseline': u'11', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Bone T0\\Left\\Patella volume': u'2450619.375', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Cartilage T0\\Left\\Lateral Tibial Cartilage volume': u'2450619.375', 'subject': u'1'}]
         header_test_list = ['subject', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\General Results T0\\Left\\Time elapsed since baseline', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Cartilage T0\\Left\\Femoral cartilage volume', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Cartilage T0\\Left\\Lateral Tibial Cartilage volume', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Cartilage T0\\Left\\Patellar cartilage volume', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Bone T0\\Left\\Femur volume', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Bone T0\\Left\\Patella volume']
         conf_file = self.configPath+"/test.conf"
         tag_file = open("test.txt", "w")
         project, connection = self.setup(conf_file)
         args = argparse.ArgumentParser().parse_args()
-        args.params = conf_file
-        args.tags = conf_file
+        args.all = conf_file
         config = ConfigStorage(args)
-        data_list, data_header_list = QIB2TBatch.obtain_data(project, tag_file, config)
+        patient_map = QIB2TBatch.get_patient_mapping(config)
+        data_list, data_header_list = QIB2TBatch.obtain_data(project, tag_file, patient_map, config)
         print(data_list)
         print(data_header_list)
         tag_file.close()
@@ -164,10 +162,11 @@ class TestQIBDatatypeRetrieval(unittest.TestCase):
         tagFile = open(path+study_id+"/tags/tags.txt", "w")
         conf_file = self.configPath+"no_QIB.conf"
         args = argparse.ArgumentParser().parse_args()
-        args.parms = conf_file
+        args.connection = conf_file
         config = ConfigStorage(args)
         project, connection = self.setup(conf_file)
-        data_list = QIB2TBatch.obtain_data(project, tagFile, config)
+        patient_map = QIB2TBatch.get_patient_mapping(config)
+        data_list = QIB2TBatch.obtain_data(project, tagFile, patient_map, config)
         self.assertEqual(data_list, [])
         connection.disconnect()
 
@@ -176,10 +175,10 @@ class TestQIBDatatypeRetrieval(unittest.TestCase):
         conf_file = self.configPath+"/test.conf"
         project, connection = self.setup(conf_file)
         args = argparse.ArgumentParser().parse_args()
-        args.params = conf_file
-        args.tags = conf_file
+        args.all = conf_file
         config = ConfigStorage(args)
-        data_list, data_header_list = QIB2TBatch.obtain_data(project, tag_file, config)
+        patient_map = QIB2TBatch.get_patient_mapping(config)
+        data_list, data_header_list = QIB2TBatch.obtain_data(project, tag_file, patient_map, config)
         tag_file.flush()
         with open("test.txt", "r") as tag_read_file:
             with open(self.file_path+ "tagstest.txt") as tag_test_file:

@@ -43,6 +43,9 @@ Taglist =
 
 import argparse
 import logging
+
+import sys
+
 import QIB2TBatch
 from ConfigStorage import ConfigStorage
 
@@ -58,6 +61,10 @@ def main(args):
 
     print("Storing configurations\n")
     config = ConfigStorage(args)
+
+    if config.__dict__ .__contains__("error"):
+        print(config.error)
+        sys.exit()
 
     print('Establishing connection\n')
     project, connection = QIB2TBatch.make_connection(config)
@@ -89,6 +96,8 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument("--all", help="Location of the configuration file, which contains connection, params and tag "
+                                      "configurations.")
     parser.add_argument("--connection", help="Location of the configuration file for establishing XNAT connection.")
     parser.add_argument("--params", help="Location of the configuration file for the variables in the .params files.")
     parser.add_argument("--tags", help="Location of the configuration file for the tags.")
