@@ -22,21 +22,20 @@ Functions that are tested:
         - Nothing new (test_write_logging_existing_information)
 '''
 
+import re
+import time
+import shutil
 import unittest
 import QIB2TBatch
 from nose.tools import assert_not_equal
 import argparse
 import os
 import sys
+from ConfigStorage import ConfigStorage
 if sys.version_info.major == 3:
     import configparser as ConfigParser
 elif sys.version_info.major == 2:
     import ConfigParser
-import re 
-import time
-import shutil
-from ConfigStorage import ConfigStorage
-
 
 
 class TestQIBDatatypeRetrieval(unittest.TestCase):

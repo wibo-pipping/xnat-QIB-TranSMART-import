@@ -1,42 +1,12 @@
 """"
-Name: QIBPrototype 
-Function: Convert QIB datatype to directory structure that can be uploaded to Transmart
+Name: QIB2TBatch
+Function: Library used by QIBconverter. This library contains all the functions needed to convert a QIB datatype to a
+directory which can be uploaded to a TranSMART database.
 Author: Jarno van Erp
 Company: The Hyve
 
-Parameters:
---connection    Location of the configuration file for establishing XNAT connection.
---params        Location of the configuration file for the variables in the .param files.
---tags          Location of the configuration file for the tags.
-
 Requirements:
 xnatpy      Downloadable here: https://bitbucket.org/bigr_erasmusmc/xnatpy
-
-Formats:
-
---connection configuration file:
-
-[Connection]
-url = 
-user =
-password =
-project =
-
---params configuration file:
-
-[Study]
-STUDY_ID =
-SECURITY_REQUIRED =
-TOP_NODE =
-
-[Directory]
-path =
-
---tags configuration file:
-
-[Tags]
-Taglist = 
-
 
 """
 
@@ -54,8 +24,11 @@ elif sys.version_info.major == 2:
 def make_connection(config):
     """
     Function: Create the connection to XNAT.
+    Parameters:
+        -config     ConfigStorage object    Object which holds the information stored in the configuration files.
     Returns: 
-        -project    xnatpy object   Xnat connection to a specific project.
+        -project    xnatpy object           Xnat connection to a specific project.
+        -connection xnatpy object           Xnat wide connection.
     """
 
     try:
@@ -84,8 +57,10 @@ def make_connection(config):
 def create_dir(config):
     """
     Function: Create the directory structure.
+    Parameters:
+        -config  ConfigStorage object    Object which holds the information stored in the configuration files.
     Returns: 
-        -new_path    String   Path to the directory where all the files will be saved.
+        -path    String                  Path to the directory where all the files will be saved.
     """
 
     path = config.base_path + config.study_id
@@ -102,7 +77,8 @@ def write_params(path, config):
     """
     Function: Uses the configuration files to write the .params files.
     Parameters:
-        -path   String  Path to the directory where all the files will be saved.
+        -path       String                  Path to the directory where all the files will be saved.
+        -config     ConfigStorage object    Object which holds the information stored in the configuration files.
     """
     tag_param_file = open(path + '/tags/tags.params', 'w')
     tag_param_file.write("TAGS_FILE=tags.txt")
@@ -121,11 +97,12 @@ def write_headers(path, config):
     """
     Function: Uses the configuration files to write the headers of the .txt files. 
     Parameters:
-        -path   String  Path to the directory where all the files will be saved.
+        -path           String                  Path to the directory where all the files will be saved.
+        -config         ConfigStorage object    Object which holds the information stored in the configuration files.
     Returns:
-        -tag_file        File    tags.txt, used to upload the metadata into TranSMART.
-        -data_file       File    (STUDY_ID)_clinical.txt, used to upload the clinical data into TranSMART.
-        -concept_file    File    (STUDY_ID)_columns.txt, used to determine which values are in which columns for uploading to TranSMART.
+        -tag_file        File                   tags.txt, used to upload the metadata into TranSMART.
+        -data_file       File                   (STUDY_ID)_clinical.txt, used to upload the clinical data into TranSMART.
+        -concept_file    File                   (STUDY_ID)_columns.txt, used to determine which values are in which columns for uploading to TranSMART.
     """
 
     data_file = open(path + '/clinical/' + config.study_id + '_clinical.txt', 'w')
@@ -146,11 +123,13 @@ def obtain_data(project, tag_file, patient_map, config):
     """
     Function: Obtains all the QIB data from the XNAT project.
     Parameters: 
-        -project        xnatpy object   Xnat connection to a specific project.
-        -tag_file        File            tags.txt, used to upload the metadata into TranSMART.
+        -project             xnatpy object           Xnat connection to a specific project.
+        -tag_file            File                    tags.txt, used to upload the metadata into TranSMART.
+        -patient_map         Dictionary              Dictionary with the patient mapping with the XNAT identifier as key.
+        -config              ConfigStorage object    Object which holds the information stored in the configuration files.
     Returns:
-        -data_list           List    List containing directories per subject, key = header, value = value.
-        -data_header_list     List    List containing all the headers.
+        -data_list           List                     List containing directories per subject, key = header, value = value.
+        -data_header_list    List                     List containing all the headers.
     """
     concept_key_list = []
     data_header_list = []
@@ -185,18 +164,22 @@ def retrieveQIB(subject_obj, experiment, tag_file, data_row_dict, subject, data_
     Function: Retrieve the biomarker information from the QIB datatype.
     
     Parameters:
-        - subject_obj        XNAT.subject    Subject object derived from XNATpy
-        - experiment        XNAT.experiment Experiment object derived from XNATpy
-        - tag_file           File            File used to write the metadata tags to
-        - data_row_dict       Dict            Dictionary for storing the subject information, headers = key
-        - subject           Subject         Subject derived from XNATpy
-        - data_header_list    List            List used for storing all the headers
-        - concept_key_list    List            List used for storing the concept keys
+        -subject_obj         Xnatpy.subject          Subject object derived from XNATpy
+        -experiment          Xnatpy.experiment       Experiment object derived from XNATpy
+        -tag_file            File                    File used to write the metadata tags to
+        -data_row_dict       Dict                    Dictionary for storing the subject information, headers = key
+        -subject             Subject                 Subject derived from XNATpy
+        -data_header_list    List                    List used for storing all the headers
+        -concept_key_list    List                    List used for storing the concept keys
+        -tag_dict            Dictionary              Dictionary used to check if certain lines are already in the tagsfile.
+        -patient_map         Dictionary              Dictionary with the patient mapping with the XNAT identifier as key.
+        -config              ConfigStorage object    Object which holds the information stored in the configuration files.
     
     Returns:
-        - data_header_list    List            List with the headers stored
-        - data_row_dict       Dict            Dict containing all the QIB information of the subject
-        - concept_key_list    List            List containing all the concept keys so far.
+        -data_header_list    List            List with the headers stored
+        -data_row_dict       Dictionary      Dict containing all the QIB information of the subject
+        -concept_key_list    List            List containing all the concept keys so far.
+        -tag_dict            Dictionary      Dictionary used to check if certain lines are already in the tagsfile.
     """
     session = subject_obj.experiments[experiment.label]
     begin_concept_key, tag_dict = writeMetaData(session, tag_file, tag_dict, config)
@@ -230,14 +213,17 @@ def writeOntologyTag(results, biomarker, concept_key, concept_key_list, tag_file
     """
 
     Parameters:
-        - results           XNAT object     Parsed QIB XML object.
-        - biomarker         XNAT object     biomarker from parsed XML.
-        - concept_key        String          concept key for TranSMART
-        - concept_key_list    List            List containing the already used concept keys.
-        - tag_file           File            File for the metadata tags.
+        -results            XNAT object         Parsed QIB XML object.
+        -biomarker          XNAT object         biomarker from parsed XML.
+        -concept_key        String              concept key for TranSMART
+        -concept_key_list   List                List containing the already used concept keys.
+        -tag_file           File                File for the metadata tags.
+        -tag_dict           Dictionary          Dictionary used to check if certain lines are already in the tagsfile.
+        -session            Xnatpy.session      Session object from xnatpy, used to retrieve the accession identifier.
 
     Returns:
-        -concept_key_list     List    List containing the already used concept keys.
+        -concept_key_list     List          List containing the already used concept keys.
+        -tag_dict             Dictionary    Dictionary used to check if certain lines are already in the tagsfile.
 
     """
     ontology_name = results.biomarkers[biomarker].ontology_name
@@ -263,13 +249,14 @@ def writeMetaData(session, tag_file, tag_dict, config):
     Function: Write the metadata tags to the tag file.
 
     Parameters:
-        - session       XNAT object     QIB datatype object in XNATpy
-        - tag_file       File            File for the metadata tags.
-        - args          ArgumentParser
+        -session       XNAT object              QIB datatype object in XNATpy
+        -tag_file      File                     File for the metadata tags.
+        -tag_dict      Dictionary               Dictionary used to check if certain lines are already in the tagsfile.
+        -config        ConfigStorage object     Object which holds the information stored in the configuration files.
 
     Returns:
-         - concept_key   String          concept key for TranSMART
-
+         -concept_key   String          concept key for TranSMART
+         -tag_dict      Dictionary      Dictionary used to check if certain lines are already in the tagsfile.
     """
 
     analysis_tool = getattr(session, "analysis_tool")
@@ -302,7 +289,7 @@ def write_data(data_file, concept_file, data_list, data_header_list):
         -data_file           File    (STUDY_ID)_clinical.txt, used to upload the clinical data into TranSMART.
         -concept_file        File    (STUDY_ID)_columns.txt, used to determine which values are in which columns for uploading to TranSMART.
         -data_list           List    List containing a directory per subject, key = header, value = value.
-        -data_header_list     List    List containing all the headers.
+        -data_header_list    List    List containing all the headers.
     """
     data_file.write("\t".join(data_header_list) + '\n')
     column_list = []
@@ -343,7 +330,8 @@ def check_subject(rows):
     Parameters:
         - rows   List    List containing lists with the retrieved QIB information of a subject.
     """
-    # Could become slow, because of the way it is checking if a row is already presented. Also needs a way to read the header for each datapiece.
+
+    #TODO Needs a way to read the header for each datapiece.
 
     if __name__ != "__main__":
         set_subject_logger(True)
@@ -376,7 +364,16 @@ def check_subject(rows):
             print ("info log written")
 
 
-def check_file_existence(file_, type):
+def check_config_existence(file_, type):
+    """
+    Function: Checks if the configuration file exists and reads its content.
+    Parameters:
+        -file_      String      Path to configuration file.
+        -type       String      Which type of configuration file.
+    Returns:
+        -config     Config      Parsed configuration file object.
+    """
+
     try:
         file_test = open(file_, 'r')
         config = ConfigParser.SafeConfigParser()
@@ -403,6 +400,13 @@ def configError(e):
 
 
 def set_subject_logger(test_bool):
+    """
+    Function: Creates a logger for subjects and new information.
+    Parameter:
+        -test_bool        Boolean   True = test
+    Returns:
+        -subject_logger   Logger    Logger to determine if a subject or its information is already parsed
+    """
     logging.basicConfig(filename="QIBlog.log", format='%(asctime)s:%(levelname)s:%(message)s', level=logging.INFO)
     subject_logger = logging.getLogger("QIBSubjects")
     subject_logger.setLevel(logging.INFO)
@@ -420,6 +424,13 @@ def set_subject_logger(test_bool):
 
 
 def get_patient_mapping(config):
+    """
+    Function: Parse the patient mapping file to a dictionary.
+    Parameter:
+        -config         ConfigStorage object     Object which holds the information stored in the configuration files.
+    Returns:
+        -patient_dict   Dictionary               Dictionary used to map the patient identifiers. Key is identifier from XNAT.
+    """
     patient_dict = {}
     with open(config.patient_file, 'r') as patient_file:
         for line in patient_file:

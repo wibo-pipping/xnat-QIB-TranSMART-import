@@ -5,6 +5,7 @@ Author: Jarno van Erp
 Company: The Hyve
 
 Parameters:
+--all           Location of the configuration file,  Location of the configuration file, containing all the information.
 --connection    Location of the configuration file for establishing XNAT connection.
 --params        Location of the configuration file for the variables in the .param files.
 --tags          Location of the configuration file for the tags.
@@ -12,7 +13,7 @@ Parameters:
 Requirements:
 xnatpy      Downloadable here: https://bitbucket.org/bigr_erasmusmc/xnatpy
 
-Formats:
+Formats of configuration files:
 
 --connection configuration file:
 
@@ -21,6 +22,7 @@ url =
 user =
 password =
 project =
+patient_map_file =
 
 --params configuration file:
 
