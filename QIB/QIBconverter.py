@@ -47,6 +47,7 @@ import argparse
 import logging
 
 import sys
+import time
 
 import QIB2TBatch
 from ConfigStorage import ConfigStorage
@@ -58,7 +59,7 @@ def main(args):
     Parameters:
         -args   ArgumentParser      Contains the location of the configuration files.
     """
-
+    start = time.time()
     logging.info("Start.")
 
     print("Storing configurations\n")
@@ -94,6 +95,8 @@ def main(args):
 
     connection.disconnect()
     logging.info("Exit.")
+    end = time.time()
+    print(end - start)
 
 
 if __name__ == "__main__":

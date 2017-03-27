@@ -139,20 +139,23 @@ def obtain_data(project, tag_file, patient_map, config):
         data_row_dict = {}
         subject_obj = project.subjects[subject.label]
         for experiment in subject_obj.experiments.values():
-            if "qib" in experiment.label.lower():
+            if "qib" in experiment.label.lower() and experiment.project == config.project_name:
                 # Make number of returns and parameters less.
                 data_header_list, data_row_dict, concept_key_list, tag_dict = retrieveQIB(subject_obj, experiment,
                                                                                           tag_file, data_row_dict,
                                                                                           subject, data_header_list,
                                                                                           concept_key_list, tag_dict,
                                                                                           patient_map, config)
-        data_list.append(data_row_dict)
+        if len(data_row_dict) > 0:
+            data_list.append(data_row_dict)
+
     if data_list == [{}] or data_list == []:
         logging.warning("No QIB datatypes found.")
         print("No QIB datatypes found.\nExit")
         if __name__ == "__main__":
             sys.exit()
         else:
+            print("\nhoi\n")
             return data_list
 
     return data_list, data_header_list
@@ -183,22 +186,27 @@ def retrieveQIB(subject_obj, experiment, tag_file, data_row_dict, subject, data_
     """
     session = subject_obj.experiments[experiment.label]
     begin_concept_key, tag_dict = writeMetaData(session, tag_file, tag_dict, config)
-    data_row_dict['subject'] = patient_map[subject.label]
+    #data_row_dict['subject'] = patient_map[subject.label]
+    data_row_dict['subject'] = subject.label
     if 'subject' not in data_header_list:
         data_header_list.append('subject')
 
     label_list = experiment.label.split('_')
+
+    try:
+        MRI_session = subject_obj.experiments["_".join(label_list[1:])]
+        label = MRI_session._fields['laterality']
+        timepoint = MRI_session._fields['timepoint']
+    except KeyError:
+        label = label_list[3]
+        timepoint = label_list[4]
+
     for biomarker_category in session.biomarker_categories:
         results = session.biomarker_categories[biomarker_category]
         for biomarker in results.biomarkers:
             concept_value = results.biomarkers[biomarker].value
-            label = label_list[2]
-            if label_list[2].lower() == "l":
-                label = "Left"
-            elif label_list[2].lower() == "r":
-                label = "Right"
-            concept_key = str(begin_concept_key) + '\\' + str(biomarker_category) + " " + str(
-                label_list[3]) + "\\" + label + "\\" + str(biomarker)
+            concept_key = str(begin_concept_key) + '\\' + str(biomarker_category) + "\\" + label + "\\" + timepoint + \
+                          "\\" + str(biomarker)
             data_row_dict[concept_key] = concept_value
             if concept_key not in data_header_list:
                 data_header_list.append(concept_key)
@@ -294,6 +302,7 @@ def write_data(data_file, concept_file, data_list, data_header_list):
     data_file.write("\t".join(data_header_list) + '\n')
     column_list = []
     rows = []
+    subject_written = False
     for line in data_list:
         row = []
         i = 0
@@ -307,17 +316,18 @@ def write_data(data_file, concept_file, data_list, data_header_list):
                 info_piece = line[header]
                 index = data_header_list.index(header)
                 row[index] = info_piece + '\t'
-                if header == "subject":
+                if header == "subject" and subject_written == False:
                     concept_file.write(str(os.path.basename(data_file.name)) + '\t' + str(header) + '\t' + str(
                         index + 1) + '\tSUBJ_ID\n')
+                    subject_written = True
+                    column_list.append(header)
                 elif header not in column_list:
                     data_label = header.split("\\")[-1]
+                    column_list.append(header)
                     concept_file.write(str(os.path.basename(data_file.name)) + '\t' + str(
                         "\\".join(header.split("\\")[:-1])) + '\t' + str(index + 1) + '\t' + str(data_label) + '\n')
-                    column_list.append(header)
         row[-1] = row[-1].replace('\t', '\n')
         data_file.write(''.join(row))
-        print(''.join(row))
         rows.append(row)
     check_subject(rows)
     data_file.close()

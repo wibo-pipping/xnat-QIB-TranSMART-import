@@ -134,8 +134,8 @@ class TestQIBDatatypeRetrieval(unittest.TestCase):
             self.assertEqual(first_line, "\t".join(['Filename', 'Category Code', 'Column Number', 'Data Label'])+"\n")
 
     def test_obtain_data(self):
-        data_structure = [{'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Cartilage T0\\Left\\Patellar cartilage volume': u'2457600.0', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Bone T0\\Left\\Femur volume': u'10980.625', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Cartilage T0\\Left\\Femoral cartilage volume': u'6980.625', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\General Results T0\\Left\\Time elapsed since baseline': u'11', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Bone T0\\Left\\Patella volume': u'2450619.375', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Cartilage T0\\Left\\Lateral Tibial Cartilage volume': u'2450619.375', 'subject': u'1'}]
-        header_test_list = ['subject', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\General Results T0\\Left\\Time elapsed since baseline', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Cartilage T0\\Left\\Femoral cartilage volume', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Cartilage T0\\Left\\Lateral Tibial Cartilage volume', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Cartilage T0\\Left\\Patellar cartilage volume', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Bone T0\\Left\\Femur volume', 'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Bone T0\\Left\\Patella volume']
+        data_structure = [{u'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\General Results\\T0\\QIB\\Time elapsed since baseline': u'11', u'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Cartilage\\T78\\QIB\\entire (masked) image volume (mm^3)': u'2457600.0', u'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Bone\\T0\\QIB\\Femur volume': u'10980.625', u'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Cartilage\\T0\\QIB\\Lateral Tibial Cartilage volume': u'2450619.375', u'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Bone\\T0\\QIB\\Patella volume': u'2450619.375', 'subject': u'PROOF001', u'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Cartilage\\T78\\QIB\\Femoral Cartilage volume (mm^3)': u'10054.875', u'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Cartilage\\T0\\QIB\\Patellar cartilage volume': u'2457600.0', u'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Cartilage\\T0\\QIB\\Femoral cartilage volume': u'6980.625'}, {u'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Cartilage\\T78\\QIB\\entire (masked) image volume (mm^3)': u'2457602.734375', u'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Cartilage\\T78\\QIB\\Femoral Cartilage volume (mm^3)': u'10719.011926174164', 'subject': u'PROOF002'}, {u'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Cartilage\\T78\\QIB\\entire (masked) image volume (mm^3)': u'2457604.1015625', u'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Cartilage\\T78\\QIB\\Femoral Cartilage volume (mm^3)': u'8626.1393963992596', 'subject': u'PROOF004'}, {u'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Cartilage\\T78\\QIB\\entire (masked) image volume (mm^3)': u'2457600.5859375', u'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Cartilage\\T78\\QIB\\Femoral Cartilage volume (mm^3)': u'8842.1271081268787', 'subject': u'PROOF005'}]
+        header_test_list = ['subject', u'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\General Results\\T0\\QIB\\Time elapsed since baseline', u'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Cartilage\\T0\\QIB\\Femoral cartilage volume', u'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Cartilage\\T0\\QIB\\Lateral Tibial Cartilage volume', u'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Cartilage\\T0\\QIB\\Patellar cartilage volume', u'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Bone\\T0\\QIB\\Femur volume', u'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Bone\\T0\\QIB\\Patella volume', u'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Cartilage\\T78\\QIB\\Femoral Cartilage volume (mm^3)', u'MultiAtlas Appearance Model Segmentation with Volume Calculation 0.1\\Cartilage\\T78\\QIB\\entire (masked) image volume (mm^3)']
         conf_file = self.configPath+"/test.conf"
         tag_file = open("test.txt", "w")
         project, connection = self.setup(conf_file)
@@ -144,12 +144,13 @@ class TestQIBDatatypeRetrieval(unittest.TestCase):
         config = ConfigStorage(args)
         patient_map = QIB2TBatch.get_patient_mapping(config)
         data_list, data_header_list = QIB2TBatch.obtain_data(project, tag_file, patient_map, config)
+        print("------\n")
         print(data_list)
-        print(data_header_list)
+        print("------\n")
         tag_file.close()
         os.remove(tag_file.name)
-        self.assertEqual(data_structure, data_list)
         self.assertEqual(data_header_list, header_test_list)
+        self.assertEqual(data_structure, data_list)
         connection.disconnect()
 
 
@@ -161,13 +162,13 @@ class TestQIBDatatypeRetrieval(unittest.TestCase):
         tagFile = open(path+study_id+"/tags/tags.txt", "w")
         conf_file = self.configPath+"no_QIB.conf"
         args = argparse.ArgumentParser().parse_args()
-        args.connection = conf_file
+        args.all = conf_file
         config = ConfigStorage(args)
         project, connection = self.setup(conf_file)
         patient_map = QIB2TBatch.get_patient_mapping(config)
         data_list = QIB2TBatch.obtain_data(project, tagFile, patient_map, config)
+        print("tester 123 \n" + str(data_list) + "\ntest\n")
         self.assertEqual(data_list, [])
-        connection.disconnect()
 
     def test_write_meta_data(self):
         tag_file = open("test.txt", "w")
