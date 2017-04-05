@@ -198,8 +198,8 @@ def retrieveQIB(subject_obj, experiment, tag_file, data_row_dict, subject, data_
         label = MRI_session._fields['laterality']
         timepoint = MRI_session._fields['timepoint']
     except KeyError:
-        label = label_list[3]
-        timepoint = label_list[4]
+        label = label_list[2]
+        timepoint = label_list[3]
 
     for biomarker_category in session.biomarker_categories:
         results = session.biomarker_categories[biomarker_category]
@@ -388,6 +388,7 @@ def check_config_existence(file_, type):
         file_test = open(file_, 'r')
         config = ConfigParser.SafeConfigParser()
         config.read(file_)
+        file_test.close()
         return config
 
     except IOError:
