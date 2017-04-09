@@ -155,7 +155,6 @@ def obtain_data(project, tag_file, patient_map, config):
         if __name__ == "__main__":
             sys.exit()
         else:
-            print("\nhoi\n")
             return data_list
 
     return data_list, data_header_list
@@ -359,19 +358,15 @@ def check_subject(rows):
         found_subject = False
         if row[0] in log_data:
             found_subject = True
-            print("subject found")
             if ''.join(row) in log_data:
                 found_info = True
-                print("info found")
 
         if not found_subject and row not in written_to_file:
             subject_logger.info("New subject: " + ''.join(row))
             written_to_file.append(row)
-            print ("subject log written")
         elif not found_info and row not in written_to_file:
             subject_logger.info("New info for Subject: " + ''.join(row))
             written_to_file.append(row)
-            print ("info log written")
 
 
 def check_config_existence(file_, type):

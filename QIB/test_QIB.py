@@ -71,7 +71,6 @@ class TestQIBDatatypeRetrieval(unittest.TestCase):
         args.connection = self.configPath+"fail_conn.conf"
         config = ConfigStorage(args)
         project, connection = QIB2TBatch.make_connection(config)
-        print(project)
         self.assertEqual(project.__class__.__name__, "ConnectionError")
 
     def test_unfound_project(self):
@@ -144,9 +143,6 @@ class TestQIBDatatypeRetrieval(unittest.TestCase):
         config = ConfigStorage(args)
         patient_map = QIB2TBatch.get_patient_mapping(config)
         data_list, data_header_list = QIB2TBatch.obtain_data(project, tag_file, patient_map, config)
-        print("------\n")
-        print(data_header_list)
-        print("------\n")
         tag_file.close()
         os.remove(tag_file.name)
         self.assertEqual(data_header_list, header_test_list)
@@ -167,7 +163,6 @@ class TestQIBDatatypeRetrieval(unittest.TestCase):
         project, connection = self.setup(conf_file)
         patient_map = QIB2TBatch.get_patient_mapping(config)
         data_list = QIB2TBatch.obtain_data(project, tagFile, patient_map, config)
-        print("tester 123 \n" + str(data_list) + "\ntest\n")
         self.assertEqual(data_list, [])
 
     def test_write_meta_data(self):
