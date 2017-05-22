@@ -140,12 +140,12 @@ def obtain_data(project, tag_file, patient_map, config):
         subject_obj = project.subjects[subject.label]
         for experiment in subject_obj.experiments.values():
             if "qib" in experiment.label.lower() and experiment.project == config.project_name:
-                # Make number of returns and parameters less.
-                data_header_list, data_row_dict, concept_key_list, tag_dict = retrieveQIB(subject_obj, experiment,
-                                                                                          tag_file, data_row_dict,
-                                                                                          subject, data_header_list,
-                                                                                          concept_key_list, tag_dict,
-                                                                                          patient_map, config)
+                # TODO: Make number of returns and parameters less.
+                data_header_list, data_row_dict, concept_key_list, tag_dict = retrieve_QIB(subject_obj, experiment,
+                                                                                           tag_file, data_row_dict,
+                                                                                           subject, data_header_list,
+                                                                                           concept_key_list, tag_dict,
+                                                                                           patient_map, config, project)
         if len(data_row_dict) > 0:
             data_list.append(data_row_dict)
 
@@ -160,8 +160,8 @@ def obtain_data(project, tag_file, patient_map, config):
     return data_list, data_header_list
 
 
-def retrieveQIB(subject_obj, experiment, tag_file, data_row_dict, subject, data_header_list, concept_key_list, tag_dict,
-                patient_map, config):
+def retrieve_QIB(subject_obj, experiment, tag_file, data_row_dict, subject, data_header_list, concept_key_list, tag_dict,
+                 patient_map, config, project):
     """
     Function: Retrieve the biomarker information from the QIB datatype.
     
@@ -184,39 +184,38 @@ def retrieveQIB(subject_obj, experiment, tag_file, data_row_dict, subject, data_
         -tag_dict            Dictionary      Dictionary used to check if certain lines are already in the tagsfile.
     """
     session = subject_obj.experiments[experiment.label]
-    begin_concept_key, tag_dict = writeMetaData(session, tag_file, tag_dict, config)
-    #data_row_dict['subject'] = patient_map[subject.label]
-    data_row_dict['subject'] = subject.label
+    begin_concept_key, tag_dict = write_project_metadata(session, tag_file, tag_dict, config)
+
+    if subject.label in patient_map:
+        data_row_dict['subject'] = patient_map[subject.label]
+    else:
+        data_row_dict['subject'] = subject.label
     if 'subject' not in data_header_list:
         data_header_list.append('subject')
 
     label_list = experiment.label.split('_')
-
-    try:
-        MRI_session = subject_obj.experiments["_".join(label_list[1:])]
-        label = MRI_session._fields['laterality']
-        timepoint = MRI_session._fields['timepoint']
-    except KeyError:
-        label = label_list[2]
-        timepoint = label_list[3]
+    metadata = get_session_data(subject_obj, label_list)
 
     for biomarker_category in session.biomarker_categories:
         results = session.biomarker_categories[biomarker_category]
+
         for biomarker in results.biomarkers:
             concept_value = results.biomarkers[biomarker].value
-            concept_key = str(begin_concept_key) + '\\' + str(biomarker_category) + "\\" + label + "\\" + timepoint + \
-                          "\\" + str(biomarker)
+            concept_key = str(begin_concept_key) + '\\' + str(metadata["scanner"]) + '\\' + str(biomarker_category) + "\\" + metadata["laterality"] \
+                          + "\\" + metadata["timepoint"] + "\\" + str(biomarker)
             data_row_dict[concept_key] = concept_value
+
             if concept_key not in data_header_list:
                 data_header_list.append(concept_key)
-                if __name__ == "__main__":
-                    concept_key_list, tag_dict = writeOntologyTag(results, biomarker, concept_key, concept_key_list,
-                                                                  tag_file, tag_dict, session)
+
+                if __name__ == "QIB2TBatch":
+                    concept_key_list, tag_dict = write_concept_tags(results, biomarker, concept_key, concept_key_list,
+                                                                    tag_file, tag_dict, session, metadata)
 
     return data_header_list, data_row_dict, concept_key_list, tag_dict
 
 
-def writeOntologyTag(results, biomarker, concept_key, concept_key_list, tag_file, tag_dict, session):
+def write_concept_tags(results, biomarker, concept_key, concept_key_list, tag_file, tag_dict, session, metadata):
     """
 
     Parameters:
@@ -235,23 +234,29 @@ def writeOntologyTag(results, biomarker, concept_key, concept_key_list, tag_file
     """
     ontology_name = results.biomarkers[biomarker].ontology_name
     ontology_IRI = results.biomarkers[biomarker].ontology_iri
+    lines = []
     if concept_key not in concept_key_list:
-        ontology_name_row = [concept_key, "Ontology name", ontology_name]
-        ontology_iri_row = [concept_key, "Ontology IRI", ontology_IRI]
-        weight = "1"
-        tag_file.write('\t'.join(ontology_name_row) + '\t' + weight + '\n')
-        tag_file.write('\t'.join(ontology_iri_row) + '\t' + weight + '\n')
-        if len(session.base_sessions.values()) >= 1:
-            accession_identifier = session.base_sessions.values()[0].accession_identifier
-            line = concept_key + "\taccession identifier\t" + str(accession_identifier) + "\t2\n"
-            if line in tag_dict.keys():
+        weight = 1
+        lines.append('\t'.join([concept_key, "Ontology name", ontology_name]) + '\t' + str(weight) + '\n')
+        lines.append('\t'.join([concept_key, "Ontology IRI", ontology_IRI]) + '\t' + str(weight) + '\n')
+        weight = 2
+
+        for x in session.base_sessions.values():
+            lines.append('\t'.join([concept_key, "accession identifier", x.accession_identifier])+ "\t"+str(weight)+"\n")
+
+        for x in metadata:
+            lines.append('\t'.join([concept_key, x, metadata[x]])+ "\t"+str(weight)+"\n")
+
+        for line in lines:
+            if line not in tag_dict.keys():
                 tag_dict[line] = True
                 tag_file.write(line)
         concept_key_list.append(concept_key)
+
     return concept_key_list, tag_dict
 
 
-def writeMetaData(session, tag_file, tag_dict, config):
+def write_project_metadata(session, tag_file, tag_dict, config):
     """
     Function: Write the metadata tags to the tag file.
 
@@ -443,3 +448,22 @@ def get_patient_mapping(config):
             line_list = line.replace("\n","").split('\t')
             patient_dict[line_list[0]] = line_list[1]
     return patient_dict
+
+def get_session_data(subject_obj, label_list):
+
+    metadata = {}
+    #If the session cannot be found it uses a parsed version of the label to retrieve the needed information.
+    try:
+        _session = subject_obj.experiments["_".join(label_list[1:])]
+        metadata["laterality"] = _session._fields['laterality']
+        metadata["timepoint"] = _session._fields['timepoint']
+        metadata["scanner"]= _session.scanner
+        metadata["model"] = _session.model
+        metadata["manufacturer"] = _session.manufacturer
+
+    except KeyError:
+        metadata["laterality"] = label_list[3]
+        metadata["timepoint"] = label_list[4]
+        metadata["scanner"] = label_list[2]
+
+    return metadata
