@@ -1,7 +1,7 @@
 # QIB importer
 
 **Function:** Connect to an XNAT instance. There the script finds the QIB datatypes from XNAT.
-These datatypes are than transformed into a directory structure that can be uploaded to TranSMART.
+These datatypes are then transformed into a directory structure that can be uploaded to TranSMART.
 
 **Functional:** The script is tested with Python2.7 and Python3.6
 
